@@ -40,6 +40,7 @@ namespace Microsoft.AspNet.Server.Testing
             {
                 // We use full path to runtime to pack.
                 DeploymentParameters.DnxRuntime = new DirectoryInfo(runtimeBin).Parent.FullName;
+                base.ChosenRuntimePath = DeploymentParameters.DnxRuntime;
                 DnuPublish();
             }
 
