@@ -78,6 +78,7 @@ namespace Microsoft.AspNet.Server.Testing
                     DeploymentParameters.DnxRuntime,
                     DeploymentParameters.PublishWithNoSource ? "--no-source" : string.Empty);
 
+            Logger.LogError("ChosenRuntimePath is ---------------------->" + ChosenRuntimePath);
             var dnuPath = Path.Combine(ChosenRuntimePath, "dnu.cmd");
             Logger.LogInformation("Executing command {dnu} {args}", dnuPath, parameters);
 
@@ -119,7 +120,7 @@ namespace Microsoft.AspNet.Server.Testing
         {
             try
             {
-                // We've originally published the application in a temp folder. We need to delete it. 
+                // We've originally published the application in a temp folder. We need to delete it.
                 Directory.Delete(DeploymentParameters.PublishedApplicationRootPath, true);
             }
             catch (Exception exception)
