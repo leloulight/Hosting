@@ -63,7 +63,7 @@ namespace Microsoft.AspNet.Server.Testing
                         )
                         {
                             logger.LogWarning("Failed to complete the request : {0}.", exception.Message);
-                            await Task.Delay(1 * 1000); //Wait for a while before retry.
+                            await Task.Delay(3 * 1000); //Wait for a while before retry.
                         }
                     }
                 }
