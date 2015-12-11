@@ -4,12 +4,16 @@
 using System;
 using Microsoft.AspNet.Http.Features;
 
-namespace Microsoft.AspNet.Hosting.Internal
+namespace Microsoft.AspNet.Hosting
 {
-    public interface IApplication : IDisposable
+    public interface IWebApplication
     {
+        IDisposable Start();
+
         IFeatureCollection ServerFeatures { get; }
 
+        // Accessing this will block Use methods
         IServiceProvider Services { get; }
     }
+
 }

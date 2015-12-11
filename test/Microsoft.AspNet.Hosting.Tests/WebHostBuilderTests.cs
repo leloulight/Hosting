@@ -95,7 +95,7 @@ namespace Microsoft.AspNet.Hosting
             var engine = builder.UseServer(server).UseStartup<StartupCtorThrows>().Build();
             using (engine.Start())
             {
-                var service = engine.ApplicationServices.GetServices<IApplicationLifetime>();
+                var service = engine.Services.GetServices<IApplicationLifetime>();
                 Assert.NotNull(service);
                 await AssertResponseContains(server.RequestDelegate, "Exception from constructor");
             }
@@ -137,12 +137,12 @@ namespace Microsoft.AspNet.Hosting
             var config = builder.Build();
 
             var expected = "MY_TEST_ENVIRONMENT";
-            var webHost = new WebHostBuilder(config, captureStartupErrors: true).UseEnvironment(expected).Build();
+            var webHost = new WebApplicationBuilder(config, captureStartupErrors: true).UseEnvironment(expected).Build();
 
-            Assert.Equal(expected, webHost.ApplicationServices.GetService<IHostingEnvironment>().EnvironmentName);
+            Assert.Equal(expected, webHost.Services.GetService<IHostingEnvironment>().EnvironmentName);
         }
 
-        private WebHostBuilder CreateWebHostBuilder()
+        private WebApplicationBuilder CreateWebHostBuilder()
         {
             var vals = new Dictionary<string, string>
             {
@@ -152,7 +152,7 @@ namespace Microsoft.AspNet.Hosting
             var builder = new ConfigurationBuilder()
                 .AddInMemoryCollection(vals);
             var config = builder.Build();
-            return new WebHostBuilder(config, captureStartupErrors: true);
+            return new WebApplicationBuilder(config, captureStartupErrors: true);
         }
 
         private async Task AssertResponseContains(RequestDelegate app, string expectedText)

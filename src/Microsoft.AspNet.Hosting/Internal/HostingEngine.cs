@@ -19,7 +19,7 @@ using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.AspNet.Hosting.Internal
 {
-    public class HostingEngine : IHostingEngine
+    public class HostingEngine : IWebApplication
     {
         // This is defined by IIS's HttpPlatformHandler.
         private static readonly string ServerPort = "HTTP_PLATFORM_PORT";
@@ -74,7 +74,7 @@ namespace Microsoft.AspNet.Hosting.Internal
             _applicationServiceCollection.AddSingleton<IApplicationLifetime>(_applicationLifetime);
         }
 
-        public IServiceProvider ApplicationServices
+        public IServiceProvider Services
         {
             get
             {
@@ -83,7 +83,23 @@ namespace Microsoft.AspNet.Hosting.Internal
             }
         }
 
-        public virtual IApplication Start()
+        public IFeatureCollection ServerFeatures
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public IServiceProvider Services
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public virtual IDisposable Start()
         {
             var application = BuildApplication();
 
@@ -98,14 +114,14 @@ namespace Microsoft.AspNet.Hosting.Internal
             _applicationLifetime.NotifyStarted();
             logger.Started();
 
-            return new Application(ApplicationServices, Server.Features, new Disposable(() =>
-            {
-                logger.Shutdown();
-                _applicationLifetime.StopApplication();
-                Server.Dispose();
-                _applicationLifetime.NotifyStopped();
-                (_applicationServices as IDisposable)?.Dispose();
-            }));
+            return new Disposable(() =>
+           {
+               logger.Shutdown();
+               _applicationLifetime.StopApplication();
+               Server.Dispose();
+               _applicationLifetime.NotifyStopped();
+               (_applicationServices as IDisposable)?.Dispose();
+           }));
         }
 
         private void EnsureApplicationServices()

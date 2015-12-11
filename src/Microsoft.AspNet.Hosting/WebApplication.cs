@@ -2,92 +2,132 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.AspNet.Http.Features;
-using Microsoft.AspNet.Server.Features;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.AspNet.Hosting
 {
-    public class WebApplication
+
+    public class WebHostConfiguration
     {
-        private const string HostingJsonFile = "hosting.json";
-        private const string EnvironmentVariablesPrefix = "ASPNET_";
-        private const string ConfigFileKey = "config";
+        public static readonly string HostingJsonFile = "hosting.json";
+        public static readonly string EnvironmentVariablesPrefix = "ASPNET_";
 
-        public static void Run(string[] args)
+        public static IConfiguration GetDefault()
         {
-            Run(startupType: null, args: args);
+            return GetDefault(args: null);
         }
 
-        public static void Run<TStartup>()
-        {
-            Run(typeof(TStartup), null);
-        }
-
-        public static void Run<TStartup>(string[] args)
-        {
-            Run(typeof(TStartup), args);
-        }
-
-        public static void Run(Type startupType)
-        {
-            Run(startupType, null);
-        }
-
-        public static void Run(Type startupType, string[] args)
-        {
-            // Allow the location of the json file to be specified via a --config command line arg
-            var tempBuilder = new ConfigurationBuilder().AddCommandLine(args);
-            var tempConfig = tempBuilder.Build();
-            var configFilePath = tempConfig[ConfigFileKey] ?? HostingJsonFile;
-            var config = LoadHostingConfiguration(configFilePath, args);
-
-            var hostBuilder = new WebHostBuilder(config, captureStartupErrors: true);
-            if (startupType != null)
-            {
-                hostBuilder.UseStartup(startupType);
-            }
-            var host = hostBuilder.Build();
-            using (var app = host.Start())
-            {
-                var hostingEnv = app.Services.GetRequiredService<IHostingEnvironment>();
-                Console.WriteLine("Hosting environment: " + hostingEnv.EnvironmentName);
-
-                var serverAddresses = app.ServerFeatures.Get<IServerAddressesFeature>();
-                if (serverAddresses != null)
-                {
-                    foreach (var address in serverAddresses.Addresses)
-                    {
-                        Console.WriteLine("Now listening on: " + address);
-                    }
-                }
-
-                Console.WriteLine("Application started. Press Ctrl+C to shut down.");
-
-                var appLifetime = app.Services.GetRequiredService<IApplicationLifetime>();
-
-                Console.CancelKeyPress += (sender, eventArgs) =>
-                {
-                    appLifetime.StopApplication();
-                    // Don't terminate the process immediately, wait for the Main thread to exit gracefully.
-                    eventArgs.Cancel = true;
-                };
-
-                appLifetime.ApplicationStopping.WaitHandle.WaitOne();
-            }
-        }
-
-        internal static IConfiguration LoadHostingConfiguration(string configJsonPath, string[] args)
+        public static IConfiguration GetDefault(string[] args)
         {
             // We are adding all environment variables first and then adding the ASPNET_ ones
             // with the prefix removed to unify with the command line and config file formats
-            return new ConfigurationBuilder()
-                .AddJsonFile(configJsonPath, optional: true)
+            var configBuilder = new ConfigurationBuilder()
+                .AddJsonFile(HostingJsonFile, optional: true)
                 .AddEnvironmentVariables()
-                .AddEnvironmentVariables(prefix: EnvironmentVariablesPrefix)
-                .AddCommandLine(args)
+                .AddEnvironmentVariables(prefix: EnvironmentVariablesPrefix);
+
+            if (args != null)
+            {
+                configBuilder.AddCommandLine(args);
+            }
+
+            return configBuilder.Build();
+        }
+    }
+
+    internal class Sample
+    {
+        public void Main(string[] args)
+        {
+            // var config = WebHostConfiguration.GetDefault(args);
+            var server = args[0];
+
+            var config = new ConfigurationBuilder()
+                            .AddJsonFile($"hosting.{server}.json", optional: true)
+                            .Build();
+
+            var builder = new WebApplicationBuilder()
+                .UseConfiguration(config)
+                .UseServerFactory("Microsoft.AspNet.Server.Kestrel")
+                .UseEnvironment("Development")
+                .UseStartup(appBuilder =>
+                {
+                });
+
+            // var engine = builder.Start();
+            var application = builder.Build();
+        }
+
+        // Template
+        public void Main2(string[] args)
+        {
+            var config = WebHostConfiguration.GetDefault(args);
+
+            var application = new WebApplicationBuilder()
+                .UseConfiguration(config)
                 .Build();
+
+            application.Run();
+        }
+
+        public void Main3(string[] args)
+        {
+            var config = WebHostConfiguration.GetDefault(args);
+
+            var application = new WebApplicationBuilder()
+                .UseConfiguration(config)
+                .Build();
+
+            var addresses = application.GetAddresses();
+            addresses.Add("http://localhost:5000");
+            addresses.Add("http://localhost:5001");
+
+            application.Run();
+        }
+
+        // Manual hosting and blocking
+        public void Main4(string[] args)
+        {
+            var config = WebHostConfiguration.GetDefault(args);
+
+            var application = new WebApplicationBuilder()
+                .UseConfiguration(config)
+                .Build();
+
+            using (var app = application.Start())
+            {
+                Console.ReadLine();
+            }
+        }
+    }
+
+    internal class StartAndStop
+    {
+        private readonly IWebApplication _host;
+        private IDisposable _app;
+
+        public StartAndStop()
+        {
+            _host = new WebApplicationBuilder().Build();
+        }
+
+        public void Start()
+        {
+            _app = _host.Start();
+        }
+
+        public void Stop()
+        {
+            _app.Dispose();
+        }
+
+        public void AddUrls()
+        {
+            var addresses = _host.GetAddresses();
+
+            // Clear all addresses
+            addresses.Clear();
+            addresses.Add("http://localhost:5000");
         }
     }
 }

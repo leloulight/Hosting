@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting.Builder;
@@ -18,9 +19,10 @@ using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.AspNet.Hosting
 {
-    public class WebHostBuilder
+    public class WebApplicationBuilder
     {
         private readonly IHostingEnvironment _hostingEnvironment;
+
         private readonly ILoggerFactory _loggerFactory;
         private readonly IConfiguration _config;
         private readonly WebHostOptions _options;
@@ -39,28 +41,11 @@ namespace Microsoft.AspNet.Hosting
         private IServerFactory _serverFactory;
         private IServer _server;
 
-        public WebHostBuilder()
-            : this(config: new ConfigurationBuilder().Build())
-        {
-        }
-
-        public WebHostBuilder(IConfiguration config)
-            : this(config: config, captureStartupErrors: false)
-        {
-        }
-
-        public WebHostBuilder(IConfiguration config, bool captureStartupErrors)
-        {
-            if (config == null)
-            {
-                throw new ArgumentNullException(nameof(config));
-            }
-
+        public WebApplicationBuilder()
+        { 
             _hostingEnvironment = new HostingEnvironment();
             _loggerFactory = new LoggerFactory();
-            _config = config;
-            _options = new WebHostOptions(config);
-            _captureStartupErrors = captureStartupErrors;
+            _config = WebHostConfiguration.GetDefault();
         }
 
         private IServiceCollection BuildHostingServices()
@@ -101,7 +86,7 @@ namespace Microsoft.AspNet.Hosting
             return services;
         }
 
-        public IHostingEngine Build()
+        public IWebApplication Build()
         {
             var hostingServices = BuildHostingServices();
 
@@ -130,13 +115,18 @@ namespace Microsoft.AspNet.Hosting
             return engine;
         }
 
-        public WebHostBuilder UseServices(Action<IServiceCollection> configureServices)
+        public WebApplicationBuilder UseConfiguration(IConfiguration configuration)
+        {
+            return this;
+        }
+
+        public WebApplicationBuilder UseServices(Action<IServiceCollection> configureServices)
         {
             _configureServices = configureServices;
             return this;
         }
 
-        public WebHostBuilder UseEnvironment(string environment)
+        public WebApplicationBuilder UseEnvironment(string environment)
         {
             if (environment == null)
             {
@@ -147,7 +137,7 @@ namespace Microsoft.AspNet.Hosting
             return this;
         }
 
-        public WebHostBuilder UseServer(IServer server)
+        public WebApplicationBuilder UseServer(IServer server)
         {
             if (server == null)
             {
@@ -158,7 +148,7 @@ namespace Microsoft.AspNet.Hosting
             return this;
         }
 
-        public WebHostBuilder UseServerFactory(string assemblyName)
+        public WebApplicationBuilder UseServerFactory(string assemblyName)
         {
             if (assemblyName == null)
             {
@@ -169,7 +159,7 @@ namespace Microsoft.AspNet.Hosting
             return this;
         }
 
-        public WebHostBuilder UseServerFactory(IServerFactory factory)
+        public WebApplicationBuilder UseServerFactory(IServerFactory factory)
         {
             if (factory == null)
             {
@@ -180,7 +170,7 @@ namespace Microsoft.AspNet.Hosting
             return this;
         }
 
-        public WebHostBuilder UseStartup(string startupAssemblyName)
+        public WebApplicationBuilder UseStartup(string startupAssemblyName)
         {
             if (startupAssemblyName == null)
             {
@@ -191,7 +181,7 @@ namespace Microsoft.AspNet.Hosting
             return this;
         }
 
-        public WebHostBuilder UseStartup(Type startupType)
+        public WebApplicationBuilder UseStartup(Type startupType)
         {
             if (startupType == null)
             {
@@ -202,12 +192,12 @@ namespace Microsoft.AspNet.Hosting
             return this;
         }
 
-        public WebHostBuilder UseStartup<TStartup>() where TStartup : class
+        public WebApplicationBuilder UseStartup<TStartup>() where TStartup : class
         {
             return UseStartup(typeof(TStartup));
         }
 
-        public WebHostBuilder UseStartup(Action<IApplicationBuilder> configureApp)
+        public WebApplicationBuilder UseStartup(Action<IApplicationBuilder> configureApp)
         {
             if (configureApp == null)
             {
@@ -217,7 +207,7 @@ namespace Microsoft.AspNet.Hosting
             return UseStartup(configureApp, configureServices: null);
         }
 
-        public WebHostBuilder UseStartup(Action<IApplicationBuilder> configureApp, Func<IServiceCollection, IServiceProvider> configureServices)
+        public WebApplicationBuilder UseStartup(Action<IApplicationBuilder> configureApp, Func<IServiceCollection, IServiceProvider> configureServices)
         {
             if (configureApp == null)
             {
@@ -228,7 +218,7 @@ namespace Microsoft.AspNet.Hosting
             return this;
         }
 
-        public WebHostBuilder UseStartup(Action<IApplicationBuilder> configureApp, Action<IServiceCollection> configureServices)
+        public WebApplicationBuilder UseStartup(Action<IApplicationBuilder> configureApp, Action<IServiceCollection> configureServices)
         {
             if (configureApp == null)
             {
