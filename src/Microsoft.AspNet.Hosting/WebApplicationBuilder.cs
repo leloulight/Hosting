@@ -44,7 +44,7 @@ namespace Microsoft.AspNet.Hosting
         {
             _hostingEnvironment = new HostingEnvironment();
             _loggerFactory = new LoggerFactory();
-            _config = WebHostConfiguration.GetDefault();
+            _config = WebApplicationConfiguration.GetDefault();
         }
 
         private IServiceCollection BuildHostingServices()

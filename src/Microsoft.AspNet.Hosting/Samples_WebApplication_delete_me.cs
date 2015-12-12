@@ -12,7 +12,7 @@ namespace Microsoft.AspNet.Hosting
         // Template
         public void Main_ProjectTemplate(string[] args)
         {
-            var config = WebHostConfiguration.GetDefault(args);
+            var config = WebApplicationConfiguration.GetDefault(args);
 
             var application = new WebApplicationBuilder()
                 .UseConfiguration(config)
@@ -23,7 +23,7 @@ namespace Microsoft.AspNet.Hosting
 
         public void Main_ConfiguringAddresses(string[] args)
         {
-            var config = WebHostConfiguration.GetDefault(args);
+            var config = WebApplicationConfiguration.GetDefault(args);
 
             var application = new WebApplicationBuilder()
                 .UseConfiguration(config)
@@ -39,7 +39,7 @@ namespace Microsoft.AspNet.Hosting
         // Manual hosting and blocking
         public void Main_ControlOverWaiting(string[] args)
         {
-            var config = WebHostConfiguration.GetDefault(args);
+            var config = WebApplicationConfiguration.GetDefault(args);
 
             var application = new WebApplicationBuilder()
                 .UseConfiguration(config)

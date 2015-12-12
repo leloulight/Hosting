@@ -21,12 +21,12 @@ namespace Microsoft.AspNet.Hosting.Internal
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            Application = configuration[WebHostConfiguration.ApplicationKey];
-            DetailedErrors = ParseBool(configuration, WebHostConfiguration.DetailedErrorsKey);
-            CaptureStartupErrors = ParseBool(configuration, WebHostConfiguration.CaptureStartupErrorsKey);
-            Environment = configuration[WebHostConfiguration.EnvironmentKey] ?? configuration[OldEnvironmentKey];
-            Server = configuration[WebHostConfiguration.ServerKey];
-            WebRoot = configuration[WebHostConfiguration.WebRootKey];
+            Application = configuration[WebApplicationConfiguration.ApplicationKey];
+            DetailedErrors = ParseBool(configuration, WebApplicationConfiguration.DetailedErrorsKey);
+            CaptureStartupErrors = ParseBool(configuration, WebApplicationConfiguration.CaptureStartupErrorsKey);
+            Environment = configuration[WebApplicationConfiguration.EnvironmentKey] ?? configuration[OldEnvironmentKey];
+            Server = configuration[WebApplicationConfiguration.ServerKey];
+            WebRoot = configuration[WebApplicationConfiguration.WebRootKey];
         }
 
         public string Application { get; set; }
