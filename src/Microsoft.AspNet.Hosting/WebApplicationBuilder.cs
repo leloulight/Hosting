@@ -47,79 +47,6 @@ namespace Microsoft.AspNet.Hosting
             _config = WebApplicationConfiguration.GetDefault();
         }
 
-        private IServiceCollection BuildHostingServices()
-        {
-            var services = new ServiceCollection();
-            services.AddSingleton(_hostingEnvironment);
-            services.AddSingleton(_loggerFactory);
-
-            services.AddTransient<IStartupLoader, StartupLoader>();
-
-            services.AddTransient<IServerLoader, ServerLoader>();
-            services.AddTransient<IApplicationBuilderFactory, ApplicationBuilderFactory>();
-            services.AddTransient<IHttpContextFactory, HttpContextFactory>();
-            services.AddLogging();
-
-            var diagnosticSource = new DiagnosticListener("Microsoft.AspNet");
-            services.AddSingleton<DiagnosticSource>(diagnosticSource);
-            services.AddSingleton<DiagnosticListener>(diagnosticSource);
-
-            // Conjure up a RequestServices
-            services.AddTransient<IStartupFilter, AutoRequestServicesStartupFilter>();
-
-            if (_configureServices != null)
-            {
-                _configureServices(services);
-            }
-
-            if (PlatformServices.Default?.Application != null)
-            {
-                services.TryAdd(ServiceDescriptor.Instance(PlatformServices.Default.Application));
-            }
-
-            if (PlatformServices.Default?.Runtime != null)
-            {
-                services.TryAdd(ServiceDescriptor.Instance(PlatformServices.Default.Runtime));
-            }
-
-            return services;
-        }
-
-        public IWebApplication Build()
-        {
-            var hostingServices = BuildHostingServices();
-
-            var hostingContainer = hostingServices.BuildServiceProvider();
-
-            var appEnvironment = hostingContainer.GetRequiredService<IApplicationEnvironment>();
-            var startupLoader = hostingContainer.GetRequiredService<IStartupLoader>();
-
-            _options = new WebHostOptions(_config);
-
-            // Initialize the hosting environment
-            _options.WebRoot = _webRoot ?? _options.WebRoot;
-            _hostingEnvironment.Initialize(appEnvironment.ApplicationBasePath, _options, _config);
-
-            if (!string.IsNullOrEmpty(_environmentName))
-            {
-                _hostingEnvironment.EnvironmentName = _environmentName;
-            }
-
-            var application = new WebApplication(hostingServices, startupLoader, _options, _config);
-
-            // Only one of these should be set, but they are used in priority
-            application.Server = _server;
-            application.ServerFactory = _serverFactory;
-            application.ServerFactoryLocation = _options.Server ?? _serverFactoryLocation;
-
-            // Only one of these should be set, but they are used in priority
-            application.Startup = _startup;
-            application.StartupType = _startupType;
-            application.StartupAssemblyName = _startupAssemblyName ?? _options.Application ?? appEnvironment.ApplicationName;
-
-            return application;
-        }
-
         public WebApplicationBuilder UseConfiguration(IConfiguration configuration)
         {
             _config = configuration;
@@ -251,6 +178,79 @@ namespace Microsoft.AspNet.Hosting
                     return services.BuildServiceProvider();
                 });
             return this;
+        }
+
+        public IWebApplication Build()
+        {
+            var hostingServices = BuildHostingServices();
+
+            var hostingContainer = hostingServices.BuildServiceProvider();
+
+            var appEnvironment = hostingContainer.GetRequiredService<IApplicationEnvironment>();
+            var startupLoader = hostingContainer.GetRequiredService<IStartupLoader>();
+
+            _options = new WebHostOptions(_config);
+
+            // Initialize the hosting environment
+            _options.WebRoot = _webRoot ?? _options.WebRoot;
+            _hostingEnvironment.Initialize(appEnvironment.ApplicationBasePath, _options, _config);
+
+            if (!string.IsNullOrEmpty(_environmentName))
+            {
+                _hostingEnvironment.EnvironmentName = _environmentName;
+            }
+
+            var application = new WebApplication(hostingServices, startupLoader, _options, _config);
+
+            // Only one of these should be set, but they are used in priority
+            application.Server = _server;
+            application.ServerFactory = _serverFactory;
+            application.ServerFactoryLocation = _options.Server ?? _serverFactoryLocation;
+
+            // Only one of these should be set, but they are used in priority
+            application.Startup = _startup;
+            application.StartupType = _startupType;
+            application.StartupAssemblyName = _startupAssemblyName ?? _options.Application ?? appEnvironment.ApplicationName;
+
+            return application;
+        }
+
+        private IServiceCollection BuildHostingServices()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton(_hostingEnvironment);
+            services.AddSingleton(_loggerFactory);
+
+            services.AddTransient<IStartupLoader, StartupLoader>();
+
+            services.AddTransient<IServerLoader, ServerLoader>();
+            services.AddTransient<IApplicationBuilderFactory, ApplicationBuilderFactory>();
+            services.AddTransient<IHttpContextFactory, HttpContextFactory>();
+            services.AddLogging();
+
+            var diagnosticSource = new DiagnosticListener("Microsoft.AspNet");
+            services.AddSingleton<DiagnosticSource>(diagnosticSource);
+            services.AddSingleton<DiagnosticListener>(diagnosticSource);
+
+            // Conjure up a RequestServices
+            services.AddTransient<IStartupFilter, AutoRequestServicesStartupFilter>();
+
+            if (_configureServices != null)
+            {
+                _configureServices(services);
+            }
+
+            if (PlatformServices.Default?.Application != null)
+            {
+                services.TryAdd(ServiceDescriptor.Instance(PlatformServices.Default.Application));
+            }
+
+            if (PlatformServices.Default?.Runtime != null)
+            {
+                services.TryAdd(ServiceDescriptor.Instance(PlatformServices.Default.Runtime));
+            }
+
+            return services;
         }
     }
 }
