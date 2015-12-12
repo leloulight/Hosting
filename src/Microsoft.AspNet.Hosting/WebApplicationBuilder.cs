@@ -2,7 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting.Builder;
@@ -106,19 +105,19 @@ namespace Microsoft.AspNet.Hosting
                 _hostingEnvironment.EnvironmentName = _environmentName;
             }
 
-            var engine = new WebApplication(hostingServices, startupLoader, _options, _config);
+            var application = new WebApplication(hostingServices, startupLoader, _options, _config);
 
             // Only one of these should be set, but they are used in priority
-            engine.Server = _server;
-            engine.ServerFactory = _serverFactory;
-            engine.ServerFactoryLocation = _options.Server ?? _serverFactoryLocation;
+            application.Server = _server;
+            application.ServerFactory = _serverFactory;
+            application.ServerFactoryLocation = _options.Server ?? _serverFactoryLocation;
 
             // Only one of these should be set, but they are used in priority
-            engine.Startup = _startup;
-            engine.StartupType = _startupType;
-            engine.StartupAssemblyName = _startupAssemblyName ?? _options.Application ?? appEnvironment.ApplicationName;
+            application.Startup = _startup;
+            application.StartupType = _startupType;
+            application.StartupAssemblyName = _startupAssemblyName ?? _options.Application ?? appEnvironment.ApplicationName;
 
-            return engine;
+            return application;
         }
 
         public WebApplicationBuilder UseConfiguration(IConfiguration configuration)
