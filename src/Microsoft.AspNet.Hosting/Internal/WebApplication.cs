@@ -19,7 +19,7 @@ using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.AspNet.Hosting.Internal
 {
-    public class HostingEngine : IWebApplication
+    public class WebApplication : IWebApplication
     {
         // This is defined by IIS's HttpPlatformHandler.
         private static readonly string ServerPort = "HTTP_PLATFORM_PORT";
@@ -44,7 +44,7 @@ namespace Microsoft.AspNet.Hosting.Internal
         internal string ServerFactoryLocation { get; set; }
         internal IServer Server { get; set; }
 
-        public HostingEngine(
+        public WebApplication(
             IServiceCollection appServices,
             IStartupLoader startupLoader,
             WebHostOptions options,
@@ -118,7 +118,7 @@ namespace Microsoft.AspNet.Hosting.Internal
         {
             var application = BuildApplication();
 
-            var logger = _applicationServices.GetRequiredService<ILogger<HostingEngine>>();
+            var logger = _applicationServices.GetRequiredService<ILogger<WebApplication>>();
             var diagnosticSource = _applicationServices.GetRequiredService<DiagnosticSource>();
             var httpContextFactory = _applicationServices.GetRequiredService<IHttpContextFactory>();
 
@@ -216,7 +216,7 @@ namespace Microsoft.AspNet.Hosting.Internal
 
                 // Write errors to standard out so they can be retrieved when not in development mode.
                 Console.Out.WriteLine("Application startup exception: " + ex.ToString());
-                var logger = _applicationServices.GetRequiredService<ILogger<HostingEngine>>();
+                var logger = _applicationServices.GetRequiredService<ILogger<WebApplication>>();
                 logger.ApplicationError(ex);
 
                 // Generate an HTML error page.

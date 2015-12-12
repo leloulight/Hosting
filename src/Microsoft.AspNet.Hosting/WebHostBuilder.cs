@@ -106,7 +106,7 @@ namespace Microsoft.AspNet.Hosting
                 _hostingEnvironment.EnvironmentName = _environmentName;
             }
 
-            var engine = new HostingEngine(hostingServices, startupLoader, _options, _config, _hostingEnvironment);
+            var engine = new WebApplication(hostingServices, startupLoader, _options, _config);
 
             // Only one of these should be set, but they are used in priority
             engine.Server = _server;

@@ -8,13 +8,6 @@ namespace Microsoft.AspNet.Hosting.Internal
 {
     public class WebHostOptions
     {
-        private const string ApplicationKey = "app";
-        private const string DetailedErrorsKey = "detailedErrors";
-        private const string EnvironmentKey = "environment";
-        private const string ServerKey = "server";
-        private const string WebRootKey = "webroot";
-        private const string CaptureStartupErrorsKey = "captureStartupErrors";
-
         private const string OldEnvironmentKey = "ENV";
 
         public WebHostOptions()
@@ -28,12 +21,12 @@ namespace Microsoft.AspNet.Hosting.Internal
                 throw new ArgumentNullException(nameof(configuration));
             }
 
-            Application = configuration[ApplicationKey];
-            DetailedErrors = ParseBool(configuration, DetailedErrorsKey);
-            CaptureStartupErrors = ParseBool(configuration, CaptureStartupErrorsKey);
-            Environment = configuration[EnvironmentKey] ?? configuration[OldEnvironmentKey];
-            Server = configuration[ServerKey];
-            WebRoot = configuration[WebRootKey];
+            Application = configuration[WebHostConfiguration.ApplicationKey];
+            DetailedErrors = ParseBool(configuration, WebHostConfiguration.DetailedErrorsKey);
+            CaptureStartupErrors = ParseBool(configuration, WebHostConfiguration.CaptureStartupErrorsKey);
+            Environment = configuration[WebHostConfiguration.EnvironmentKey] ?? configuration[OldEnvironmentKey];
+            Server = configuration[WebHostConfiguration.ServerKey];
+            WebRoot = configuration[WebHostConfiguration.WebRootKey];
         }
 
         public string Application { get; set; }

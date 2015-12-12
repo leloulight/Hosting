@@ -7,7 +7,7 @@ using Microsoft.AspNet.FileProviders;
 using Microsoft.AspNet.Hosting.Internal;
 using Microsoft.Extensions.Configuration;
 
-namespace Microsoft.AspNet.Hosting
+namespace Microsoft.AspNet.Hosting.Internal
 {
     public static class HostingEnvironmentExtensions
     {

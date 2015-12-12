@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.AspNet.Hosting
 {
     public class WebHostConfiguration
     {
+        public static readonly string ApplicationKey = "app";
+        public static readonly string DetailedErrorsKey = "detailedErrors";
+        public static readonly string EnvironmentKey = "environment";
+        public static readonly string ServerKey = "server";
+        public static readonly string WebRootKey = "webroot";
+        public static readonly string CaptureStartupErrorsKey = "captureStartupErrors";
+
         public static readonly string HostingJsonFile = "hosting.json";
         public static readonly string EnvironmentVariablesPrefix = "ASPNET_";
 

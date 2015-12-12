@@ -7,19 +7,40 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.AspNet.Hosting
 {
+    /// <summary>
+    /// Represents a configured web application
+    /// </summary>
     public interface IWebApplication
     {
-        IDisposable Start();
-
+        /// <summary>
+        /// The <see cref="IFeatureCollection"/> exposed by the configured server.
+        /// </summary>
         IFeatureCollection ServerFeatures { get; }
 
+        /// <summary>
+        /// The <see cref="IServiceProvider"/> for the application.
+        /// </summary>
         IServiceProvider Services { get; }
 
-        // Services that are created by the WebHostBuilder internally
+        /// <summary>
+        /// 
+        /// </summary>
         IApplicationLifetime Lifetime { get; }
 
+        /// <summary>
+        /// The <see cref="IHostingEnvironment"/> of the application.
+        /// </summary>
         IHostingEnvironment HostingEnvironment { get; }
 
+        /// <summary>
+        /// The <see cref="ILoggerFactory"/> 
+        /// </summary>
         ILoggerFactory LoggerFactory { get; }
+
+        /// <summary>
+        /// Starts listening on the configured addresses.
+        /// </summary>
+        /// <returns></returns>
+        IDisposable Start();
     }
 }
