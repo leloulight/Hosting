@@ -2,64 +2,13 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.AspNet.Hosting
 {
-
-    public class WebHostConfiguration
+    internal class SampleApplications
     {
-        public static readonly string HostingJsonFile = "hosting.json";
-        public static readonly string EnvironmentVariablesPrefix = "ASPNET_";
-
-        public static IConfiguration GetDefault()
-        {
-            return GetDefault(args: null);
-        }
-
-        public static IConfiguration GetDefault(string[] args)
-        {
-            // We are adding all environment variables first and then adding the ASPNET_ ones
-            // with the prefix removed to unify with the command line and config file formats
-            var configBuilder = new ConfigurationBuilder()
-                .AddJsonFile(HostingJsonFile, optional: true)
-                .AddEnvironmentVariables()
-                .AddEnvironmentVariables(prefix: EnvironmentVariablesPrefix);
-
-            if (args != null)
-            {
-                configBuilder.AddCommandLine(args);
-            }
-
-            return configBuilder.Build();
-        }
-    }
-
-    internal class Sample
-    {
-        public void Main(string[] args)
-        {
-            // var config = WebHostConfiguration.GetDefault(args);
-            var server = args[0];
-
-            var config = new ConfigurationBuilder()
-                            .AddJsonFile($"hosting.{server}.json", optional: true)
-                            .Build();
-
-            var builder = new WebApplicationBuilder()
-                .UseConfiguration(config)
-                .UseServerFactory("Microsoft.AspNet.Server.Kestrel")
-                .UseEnvironment("Development")
-                .UseStartup(appBuilder =>
-                {
-                });
-
-            // var engine = builder.Start();
-            var application = builder.Build();
-        }
-
         // Template
-        public void Main2(string[] args)
+        public void Main_ProjectTemplate(string[] args)
         {
             var config = WebHostConfiguration.GetDefault(args);
 
@@ -70,7 +19,7 @@ namespace Microsoft.AspNet.Hosting
             application.Run();
         }
 
-        public void Main3(string[] args)
+        public void Main_ConfiguringAddresses(string[] args)
         {
             var config = WebHostConfiguration.GetDefault(args);
 
@@ -86,7 +35,7 @@ namespace Microsoft.AspNet.Hosting
         }
 
         // Manual hosting and blocking
-        public void Main4(string[] args)
+        public void Main_ControlOverWaiting(string[] args)
         {
             var config = WebHostConfiguration.GetDefault(args);
 
@@ -99,12 +48,36 @@ namespace Microsoft.AspNet.Hosting
                 Console.ReadLine();
             }
         }
+
+        public void Main_FullControl(string[] args)
+        {
+            var config = WebHostConfiguration.GetDefault(args);
+
+            var builder = new WebApplicationBuilder()
+                .UseConfiguration(config)
+                .UseServerFactory("Microsoft.AspNet.Server.Kestrel")
+                .UseEnvironment("Development")
+                .UseWebRoot("public")
+                .UseStartup(app =>
+                {
+                    app.Use(next => context =>
+                    {
+                        return next(context);
+                    });
+                });
+
+            var application = builder.Build();
+
+            application.Run();
+        }
+
+
     }
 
     internal class StartAndStop
     {
         private readonly IWebApplication _host;
-        private IDisposable _app;
+        private IDisposable _application;
 
         public StartAndStop()
         {
@@ -113,12 +86,12 @@ namespace Microsoft.AspNet.Hosting
 
         public void Start()
         {
-            _app = _host.Start();
+            _application = _host.Start();
         }
 
         public void Stop()
         {
-            _app.Dispose();
+            _application.Dispose();
         }
 
         public void AddUrls()

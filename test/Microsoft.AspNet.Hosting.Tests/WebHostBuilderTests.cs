@@ -137,9 +137,12 @@ namespace Microsoft.AspNet.Hosting
             var config = builder.Build();
 
             var expected = "MY_TEST_ENVIRONMENT";
-            var webHost = new WebApplicationBuilder(config, captureStartupErrors: true).UseEnvironment(expected).Build();
+            var application = new WebApplicationBuilder()
+                .UseConfiguration(config)
+                .UseEnvironment(expected)
+                .Build();
 
-            Assert.Equal(expected, webHost.Services.GetService<IHostingEnvironment>().EnvironmentName);
+            Assert.Equal(expected, application.HostingEnvironment.EnvironmentName);
         }
 
         private WebApplicationBuilder CreateWebHostBuilder()
@@ -152,7 +155,7 @@ namespace Microsoft.AspNet.Hosting
             var builder = new ConfigurationBuilder()
                 .AddInMemoryCollection(vals);
             var config = builder.Build();
-            return new WebApplicationBuilder(config, captureStartupErrors: true);
+            return new WebApplicationBuilder().UseConfiguration(config);
         }
 
         private async Task AssertResponseContains(RequestDelegate app, string expectedText)

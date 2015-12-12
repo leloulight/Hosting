@@ -4,7 +4,7 @@
 using System;
 using Microsoft.Extensions.Configuration;
 
-namespace Microsoft.AspNet.Hosting
+namespace Microsoft.AspNet.Hosting.Internal
 {
     public class WebHostOptions
     {
@@ -13,6 +13,8 @@ namespace Microsoft.AspNet.Hosting
         private const string EnvironmentKey = "environment";
         private const string ServerKey = "server";
         private const string WebRootKey = "webroot";
+        private const string CaptureStartupErrorsKey = "captureStartupErrors";
+
         private const string OldEnvironmentKey = "ENV";
 
         public WebHostOptions()
@@ -27,8 +29,8 @@ namespace Microsoft.AspNet.Hosting
             }
 
             Application = configuration[ApplicationKey];
-            DetailedErrors = string.Equals("true", configuration[DetailedErrorsKey], StringComparison.OrdinalIgnoreCase)
-                || string.Equals("1", configuration[DetailedErrorsKey], StringComparison.OrdinalIgnoreCase);
+            DetailedErrors = ParseBool(configuration, DetailedErrorsKey);
+            CaptureStartupErrors = ParseBool(configuration, CaptureStartupErrorsKey);
             Environment = configuration[EnvironmentKey] ?? configuration[OldEnvironmentKey];
             Server = configuration[ServerKey];
             WebRoot = configuration[WebRootKey];
@@ -38,10 +40,18 @@ namespace Microsoft.AspNet.Hosting
 
         public bool DetailedErrors { get; set; }
 
+        public bool CaptureStartupErrors { get; set; }
+
         public string Environment { get; set; }
 
         public string Server { get; set; }
 
         public string WebRoot { get; set; }
+
+        private static bool ParseBool(IConfiguration configuration, string key)
+        {
+            return string.Equals("true", configuration[key], StringComparison.OrdinalIgnoreCase)
+                || string.Equals("1", configuration[key], StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

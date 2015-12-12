@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.AspNet.Http.Features;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.AspNet.Hosting
 {
@@ -12,8 +13,13 @@ namespace Microsoft.AspNet.Hosting
 
         IFeatureCollection ServerFeatures { get; }
 
-        // Accessing this will block Use methods
         IServiceProvider Services { get; }
-    }
 
+        // Services that are created by the WebHostBuilder internally
+        IApplicationLifetime Lifetime { get; }
+
+        IHostingEnvironment HostingEnvironment { get; }
+
+        ILoggerFactory LoggerFactory { get; }
+    }
 }

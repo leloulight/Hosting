@@ -9,12 +9,18 @@ using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Hosting.Server;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Http.Features;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Context = Microsoft.AspNet.Hosting.Internal.HostingApplication.Context;
 
 namespace Microsoft.AspNet.TestHost
 {
+    public static class WebApplicationBuilderExtensions
+    {
+        public static TestServer BuildTestServer(this WebApplicationBuilder builder)
+        {
+            return new TestServer(builder);
+        }
+    }
+
     public class TestServer : IServer
     {
         private const string DefaultEnvironmentName = "Development";
@@ -23,77 +29,15 @@ namespace Microsoft.AspNet.TestHost
         private bool _disposed = false;
         private IHttpApplication<Context> _application;
 
-        public TestServer(WebHostBuilder builder)
+        public TestServer(WebApplicationBuilder builder)
         {
-            var hostingEngine = builder.UseServer(this).Build();
-            _appInstance = hostingEngine.Start();
+            var application = builder.UseServer(this).Build();
+            _appInstance = application.Start();
         }
 
         public Uri BaseAddress { get; set; } = new Uri("http://localhost/");
 
         IFeatureCollection IServer.Features { get; }
-
-        public static TestServer Create()
-        {
-            return Create(config: null, configureApp: null, configureServices: null);
-        }
-
-        public static TestServer Create(Action<IApplicationBuilder> configureApp)
-        {
-            return Create(config: null, configureApp: configureApp, configureServices: null);
-        }
-
-        public static TestServer Create(Action<IApplicationBuilder> configureApp, Action<IServiceCollection> configureServices)
-        {
-            return Create(config: null, configureApp: configureApp, configureServices: configureServices);
-        }
-
-        public static TestServer Create(Action<IApplicationBuilder> configureApp, Func<IServiceCollection, IServiceProvider> configureServices)
-        {
-            return new TestServer(CreateBuilder(config: null, configureApp: configureApp, configureServices: configureServices, configureHostServices: null));
-        }
-        public static TestServer Create(Action<IApplicationBuilder> configureApp, Func<IServiceCollection, IServiceProvider> configureServices, Action<IServiceCollection> configureHostServices)
-        {
-            return new TestServer(CreateBuilder(config: null, configureApp: configureApp, configureServices: configureServices, configureHostServices: configureHostServices));
-        }
-
-        public static TestServer Create(IConfiguration config, Action<IApplicationBuilder> configureApp, Action<IServiceCollection> configureServices)
-        {
-            return new TestServer(CreateBuilder(config, configureApp, configureServices));
-        }
-
-        public static WebHostBuilder CreateBuilder(IConfiguration config, Action<IApplicationBuilder> configureApp, Action<IServiceCollection> configureServices)
-        {
-            return CreateBuilder(config, configureApp,
-                s =>
-                {
-                    if (configureServices != null)
-                    {
-                        configureServices(s);
-                    }
-                    return s.BuildServiceProvider();
-                }, null);
-        }
-        public static WebHostBuilder CreateBuilder(IConfiguration config, Action<IApplicationBuilder> configureApp, Func<IServiceCollection, IServiceProvider> configureServices)
-        {
-            return CreateBuilder(config, configureApp, configureServices, null);
-        }
-
-        public static WebHostBuilder CreateBuilder(IConfiguration config, Action<IApplicationBuilder> configureApp, Func<IServiceCollection, IServiceProvider> configureServices, Action<IServiceCollection> configureHostServices)
-        {
-            return CreateBuilder(config).UseStartup(configureApp, configureServices).UseServices(configureHostServices);
-        }
-
-        public static WebHostBuilder CreateBuilder(IConfiguration config)
-        {
-            return new WebHostBuilder(
-                config ?? new ConfigurationBuilder().Build());
-        }
-
-        public static WebHostBuilder CreateBuilder()
-        {
-            return CreateBuilder(config: null);
-        }
 
         public HttpMessageHandler CreateHandler()
         {

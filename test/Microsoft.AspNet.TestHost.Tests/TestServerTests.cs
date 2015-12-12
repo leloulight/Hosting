@@ -28,20 +28,20 @@ namespace Microsoft.AspNet.TestHost
         {
             // Arrange
             // Act & Assert (Does not throw)
-            TestServer.Create(app => { });
+            new WebApplicationBuilder().UseStartup(app => { }).BuildTestServer();
         }
 
         [ConditionalFact]
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task RequestServicesAutoCreated()
         {
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
                     return context.Response.WriteAsync("RequestServices:" + (context.RequestServices != null));
                 });
-            });
+            }).BuildTestServer();
 
             string result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("RequestServices:True", result);
@@ -71,7 +71,7 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task CustomServiceProviderSetsApplicationServices()
         {
-            var server = new TestServer(TestServer.CreateBuilder().UseStartup<CustomContainerStartup>());
+            var server = new WebApplicationBuilder().UseStartup<CustomContainerStartup>().BuildTestServer();
             string result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("ApplicationServicesEqual:True", result);
         }
@@ -113,7 +113,7 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task ExistingRequestServicesWillNotBeReplaced()
         {
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
@@ -121,7 +121,9 @@ namespace Microsoft.AspNet.TestHost
                     return context.Response.WriteAsync("Found:" + (service != null));
                 });
             },
-            services => services.AddTransient<IStartupFilter, RequestServicesFilter>());
+            services => services.AddTransient<IStartupFilter, RequestServicesFilter>())
+            .BuildTestServer();
+
             string result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("Found:True", result);
         }
@@ -130,19 +132,20 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task CanSetCustomServiceProvider()
         {
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
                     context.RequestServices = new ServiceCollection()
                     .AddTransient<TestService>()
                     .BuildServiceProvider();
-                    
+
                     var s = context.RequestServices.GetRequiredService<TestService>();
 
                     return context.Response.WriteAsync("Success");
                 });
-            });
+            }).BuildTestServer();
+
             string result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("Success", result);
         }
@@ -178,7 +181,7 @@ namespace Microsoft.AspNet.TestHost
         public async Task ExistingServiceProviderFeatureWillNotBeReplaced()
         {
             var appServices = new ServiceCollection().BuildServiceProvider();
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
@@ -186,7 +189,8 @@ namespace Microsoft.AspNet.TestHost
                     return context.Response.WriteAsync("Success");
                 });
             },
-            services => services.AddSingleton<IStartupFilter>(new ReplaceServiceProvidersFeatureFilter(appServices, appServices)));
+            services => services.AddSingleton<IStartupFilter>(new ReplaceServiceProvidersFeatureFilter(appServices, appServices))).BuildTestServer();
+
             var result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("Success", result);
         }
@@ -215,7 +219,7 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task WillReplaceServiceProviderFeatureWithNullRequestServices()
         {
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
@@ -223,7 +227,9 @@ namespace Microsoft.AspNet.TestHost
                     return context.Response.WriteAsync("Success");
                 });
             },
-            services => services.AddTransient<IStartupFilter, NullServiceProvidersFeatureFilter>());
+            services => services.AddTransient<IStartupFilter, NullServiceProvidersFeatureFilter>())
+            .BuildTestServer();
+
             var result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("Success", result);
         }
@@ -232,14 +238,14 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task CanAccessLogger()
         {
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
                     var logger = app.ApplicationServices.GetRequiredService<ILogger<HttpContext>>();
                     return context.Response.WriteAsync("FoundLogger:" + (logger != null));
                 });
-            });
+            }).BuildTestServer();
 
             string result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("FoundLogger:True", result);
@@ -253,14 +259,14 @@ namespace Microsoft.AspNet.TestHost
             {
                 services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             };
-            TestServer server = TestServer.Create(app =>
+            TestServer server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
                     var accessor = app.ApplicationServices.GetRequiredService<IHttpContextAccessor>();
-                    return context.Response.WriteAsync("HasContext:"+(accessor.HttpContext != null));
+                    return context.Response.WriteAsync("HasContext:" + (accessor.HttpContext != null));
                 });
-            }, configureServices);
+            }, configureServices).BuildTestServer();
 
             string result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("HasContext:True", result);
@@ -285,14 +291,14 @@ namespace Microsoft.AspNet.TestHost
                 services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
                 services.AddSingleton<ContextHolder>();
             };
-            TestServer server = TestServer.Create(app =>
+            TestServer server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
                     var accessor = app.ApplicationServices.GetRequiredService<ContextHolder>();
                     return context.Response.WriteAsync("HasContext:" + (accessor.Accessor.HttpContext != null));
                 });
-            }, configureServices);
+            }, configureServices).BuildTestServer();
 
             string result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("HasContext:True", result);
@@ -302,13 +308,13 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task CreateInvokesApp()
         {
-            TestServer server = TestServer.Create(app =>
+            TestServer server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(context =>
                 {
                     return context.Response.WriteAsync("CreateInvokesApp");
                 });
-            });
+            }).BuildTestServer();
 
             string result = await server.CreateClient().GetStringAsync("/path");
             Assert.Equal("CreateInvokesApp", result);
@@ -318,14 +324,15 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task DisposeStreamIgnored()
         {
-            TestServer server = TestServer.Create(app =>
+            TestServer server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(async context =>
                 {
                     await context.Response.WriteAsync("Response");
                     context.Response.Body.Dispose();
                 });
-            });
+            })
+            .BuildTestServer();
 
             HttpResponseMessage result = await server.CreateClient().GetAsync("/");
             Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -336,14 +343,14 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task DisposedServerThrows()
         {
-            TestServer server = TestServer.Create(app =>
+            TestServer server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(async context =>
                 {
                     await context.Response.WriteAsync("Response");
                     context.Response.Body.Dispose();
                 });
-            });
+            }).BuildTestServer();
 
             HttpResponseMessage result = await server.CreateClient().GetAsync("/");
             Assert.Equal(HttpStatusCode.OK, result.StatusCode);
@@ -355,15 +362,17 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public void CancelAborts()
         {
-            TestServer server = TestServer.Create(app =>
-            {
-                app.Run(context =>
-                {
-                    TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
-                    tcs.SetCanceled();
-                    return tcs.Task;
-                });
-            });
+            TestServer server = new WebApplicationBuilder()
+                                  .UseStartup(app =>
+                                  {
+                                      app.Run(context =>
+                                      {
+                                          TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
+                                          tcs.SetCanceled();
+                                          return tcs.Task;
+                                      });
+                                  })
+                                  .BuildTestServer();
 
             Assert.Throws<AggregateException>(() => { string result = server.CreateClient().GetStringAsync("/path").Result; });
         }
@@ -372,7 +381,9 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task CanCreateViaStartupType()
         {
-            TestServer server = new TestServer(TestServer.CreateBuilder().UseStartup<TestStartup>());
+            var server = new WebApplicationBuilder()
+                .UseStartup<TestStartup>()
+                .BuildTestServer();
             HttpResponseMessage result = await server.CreateClient().GetAsync("/");
             Assert.Equal(HttpStatusCode.OK, result.StatusCode);
             Assert.Equal("FoundService:True", await result.Content.ReadAsStringAsync());
@@ -382,9 +393,11 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task CanCreateViaStartupTypeAndSpecifyEnv()
         {
-            TestServer server = new TestServer(TestServer.CreateBuilder()
-                    .UseStartup<TestStartup>()
-                    .UseEnvironment("Foo"));
+            var server = new WebApplicationBuilder()
+                            .UseStartup<TestStartup>()
+                            .UseEnvironment("Foo")
+                            .BuildTestServer();
+
             HttpResponseMessage result = await server.CreateClient().GetAsync("/");
             Assert.Equal(HttpStatusCode.OK, result.StatusCode);
             Assert.Equal("FoundFoo:False", await result.Content.ReadAsStringAsync());
@@ -395,14 +408,18 @@ namespace Microsoft.AspNet.TestHost
         public async Task BeginEndDiagnosticAvailable()
         {
             DiagnosticListener diagnosticListener = null;
-            var server = TestServer.Create(app =>
-            {
-                diagnosticListener = app.ApplicationServices.GetRequiredService<DiagnosticListener>();
-                app.Run(context =>
-                {
-                    return context.Response.WriteAsync("Hello World");
-                });
-            });
+
+            var server = new WebApplicationBuilder()
+                            .UseStartup(app =>
+                            {
+                                diagnosticListener = app.ApplicationServices.GetRequiredService<DiagnosticListener>();
+                                app.Run(context =>
+                                {
+                                    return context.Response.WriteAsync("Hello World");
+                                });
+                            })
+                            .BuildTestServer();
+
             var listener = new TestDiagnosticListener();
             diagnosticListener.SubscribeWithAdapter(listener);
             var result = await server.CreateClient().GetStringAsync("/path");
@@ -421,18 +438,20 @@ namespace Microsoft.AspNet.TestHost
         public async Task ExceptionDiagnosticAvailable()
         {
             DiagnosticListener diagnosticListener = null;
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 diagnosticListener = app.ApplicationServices.GetRequiredService<DiagnosticListener>();
                 app.Run(context =>
                 {
                     throw new Exception("Test exception");
                 });
-            });
+            })
+            .BuildTestServer();
+
             var listener = new TestDiagnosticListener();
             diagnosticListener.SubscribeWithAdapter(listener);
             await Assert.ThrowsAsync<Exception>(() => server.CreateClient().GetAsync("/path"));
-            
+
             // This ensures that all diagnostics are completely written to the diagnostic listener
             Thread.Sleep(1000);
 

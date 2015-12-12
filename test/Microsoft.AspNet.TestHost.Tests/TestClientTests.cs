@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
+using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Testing.xunit;
 using Xunit;
@@ -22,7 +23,7 @@ namespace Microsoft.AspNet.TestHost
 
         public TestClientTests()
         {
-            _server = TestServer.Create(app => app.Run(ctx => Task.FromResult(0)));
+            _server = new WebApplicationBuilder().UseStartup(app => app.Run(ctx => Task.FromResult(0))).BuildTestServer();
         }
 
         [ConditionalFact]
@@ -33,7 +34,7 @@ namespace Microsoft.AspNet.TestHost
             var expected = "GET Response";
             RequestDelegate appDelegate = ctx =>
                 ctx.Response.WriteAsync(expected);
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var server = new WebApplicationBuilder().UseStartup(app => app.Run(appDelegate)).BuildTestServer();
             var client = server.CreateClient();
 
             // Act
@@ -55,7 +56,7 @@ namespace Microsoft.AspNet.TestHost
                 Assert.Equal("/", ctx.Request.Path.Value);
                 return ctx.Response.WriteAsync(expected);
             };
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var server = new WebApplicationBuilder().UseStartup(app => app.Run(appDelegate)).BuildTestServer();
             var client = server.CreateClient();
 
             // Act
@@ -77,7 +78,7 @@ namespace Microsoft.AspNet.TestHost
                 Assert.Equal("/", ctx.Request.Path.Value);
                 return ctx.Response.WriteAsync(expected);
             };
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var server = new WebApplicationBuilder().UseStartup(app => app.Run(appDelegate)).BuildTestServer();
             var client = server.CreateClient();
 
             // Act
@@ -94,7 +95,7 @@ namespace Microsoft.AspNet.TestHost
             // Arrange
             RequestDelegate appDelegate = ctx =>
                 ctx.Response.WriteAsync(new StreamReader(ctx.Request.Body).ReadToEnd() + " PUT Response");
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var server = new WebApplicationBuilder().UseStartup(app => app.Run(appDelegate)).BuildTestServer();
             var client = server.CreateClient();
 
             // Act
@@ -112,7 +113,7 @@ namespace Microsoft.AspNet.TestHost
             // Arrange
             RequestDelegate appDelegate = async ctx =>
                 await ctx.Response.WriteAsync(new StreamReader(ctx.Request.Body).ReadToEnd() + " POST Response");
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var server = new WebApplicationBuilder().UseStartup(app => app.Run(appDelegate)).BuildTestServer();
             var client = server.CreateClient();
 
             // Act
@@ -150,10 +151,11 @@ namespace Microsoft.AspNet.TestHost
                     }
                 }
             };
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(appDelegate);
-            });
+            })
+            .BuildTestServer();
 
             // Act
             var client = server.CreateWebSocketClient();
@@ -198,10 +200,11 @@ namespace Microsoft.AspNet.TestHost
                     websocket.Dispose();
                 }
             };
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(appDelegate);
-            });
+            })
+            .BuildTestServer();
 
             // Act
             var client = server.CreateWebSocketClient();
@@ -231,10 +234,11 @@ namespace Microsoft.AspNet.TestHost
                     }
                 }
             };
-            var server = TestServer.Create(app =>
+            var server = new WebApplicationBuilder().UseStartup(app =>
             {
                 app.Run(appDelegate);
-            });
+            })
+            .BuildTestServer();
 
             // Act
             var client = server.CreateWebSocketClient();
@@ -279,7 +283,7 @@ namespace Microsoft.AspNet.TestHost
             };
 
             // Act
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var server = new WebApplicationBuilder().UseStartup(app => app.Run(appDelegate)).BuildTestServer();
             var client = server.CreateClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost:12345");
             var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
@@ -310,7 +314,7 @@ namespace Microsoft.AspNet.TestHost
             };
 
             // Act
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var server = new WebApplicationBuilder().UseStartup(app => app.Run(appDelegate)).BuildTestServer();
             var client = server.CreateClient();
             var cts = new CancellationTokenSource();
             cts.CancelAfter(500);

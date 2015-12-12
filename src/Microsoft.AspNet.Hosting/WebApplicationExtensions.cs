@@ -5,28 +5,35 @@ using System;
 using System.Collections.Generic;
 using Microsoft.AspNet.Http.Features;
 using Microsoft.AspNet.Server.Features;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Microsoft.AspNet.Hosting
 {
-    public static class HostingEngineExtensions
+    public static class WebApplicationExtensions
     {
+        /// <summary>
+        /// Retruns the server addresses the web application is going to listen on.
+        /// </summary>
+        /// <param name="application"></param>
+        /// <returns></returns>
         public static ICollection<string> GetAddresses(this IWebApplication application)
         {
-            return application.ServerFeatures.Get<IServerAddressesFeature>().Addresses;
+            return application.ServerFeatures.Get<IServerAddressesFeature>()?.Addresses;
         }
 
+        /// <summary>
+        /// Runs a web application and block the calling thread until host shutdown.
+        /// </summary>
+        /// <param name="application"></param>
         public static void Run(this IWebApplication application)
         {
             using (application.Start())
             {
-                var hostingEnv = application.Services.GetRequiredService<IHostingEnvironment>();
-                Console.WriteLine("Hosting environment: " + hostingEnv.EnvironmentName);
+                Console.WriteLine("Hosting environment: " + application.HostingEnvironment.EnvironmentName);
 
-                var serverAddresses = application.ServerFeatures.Get<IServerAddressesFeature>();
+                var serverAddresses = application.GetAddresses();
                 if (serverAddresses != null)
                 {
-                    foreach (var address in serverAddresses.Addresses)
+                    foreach (var address in serverAddresses)
                     {
                         Console.WriteLine("Now listening on: " + address);
                     }
@@ -34,16 +41,15 @@ namespace Microsoft.AspNet.Hosting
 
                 Console.WriteLine("Application started. Press Ctrl+C to shut down.");
 
-                var appLifetime = application.Services.GetRequiredService<IApplicationLifetime>();
-
                 Console.CancelKeyPress += (sender, eventArgs) =>
                 {
-                    appLifetime.StopApplication();
+                    application.Lifetime.StopApplication();
+
                     // Don't terminate the process immediately, wait for the Main thread to exit gracefully.
                     eventArgs.Cancel = true;
                 };
 
-                appLifetime.ApplicationStopping.WaitHandle.WaitOne();
+                application.Lifetime.ApplicationStopping.WaitHandle.WaitOne();
             }
         }
     }

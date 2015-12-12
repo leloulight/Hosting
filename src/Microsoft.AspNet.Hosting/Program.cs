@@ -7,7 +7,13 @@ namespace Microsoft.AspNet.Hosting
     {
         public static void Main(string[] args)
         {
-            WebApplication.Run(args);
+            var config = WebHostConfiguration.GetDefault(args);
+
+            var application = new WebApplicationBuilder()
+                .UseConfiguration(config)
+                .Build();
+
+            application.Run();
         }
     }
 }

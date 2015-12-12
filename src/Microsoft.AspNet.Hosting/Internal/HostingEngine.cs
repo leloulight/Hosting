@@ -29,9 +29,10 @@ namespace Microsoft.AspNet.Hosting.Internal
         private readonly ApplicationLifetime _applicationLifetime;
         private readonly WebHostOptions _options;
         private readonly IConfiguration _config;
-        private readonly bool _captureStartupErrors;
 
         private IServiceProvider _applicationServices;
+        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly ILoggerFactory _loggerFactory;
 
         // Only one of these should be set
         internal string StartupAssemblyName { get; set; }
@@ -47,8 +48,7 @@ namespace Microsoft.AspNet.Hosting.Internal
             IServiceCollection appServices,
             IStartupLoader startupLoader,
             WebHostOptions options,
-            IConfiguration config,
-            bool captureStartupErrors)
+            IConfiguration config)
         {
             if (appServices == null)
             {
@@ -69,7 +69,6 @@ namespace Microsoft.AspNet.Hosting.Internal
             _options = options;
             _applicationServiceCollection = appServices;
             _startupLoader = startupLoader;
-            _captureStartupErrors = captureStartupErrors;
             _applicationLifetime = new ApplicationLifetime();
             _applicationServiceCollection.AddSingleton<IApplicationLifetime>(_applicationLifetime);
         }
@@ -87,15 +86,31 @@ namespace Microsoft.AspNet.Hosting.Internal
         {
             get
             {
-                throw new NotImplementedException();
+                return Server?.Features;
             }
         }
 
-        public IServiceProvider Services
+        public IApplicationLifetime Lifetime
         {
             get
             {
-                throw new NotImplementedException();
+                return _applicationLifetime;
+            }
+        }
+
+        public IHostingEnvironment HostingEnvironment
+        {
+            get
+            {
+                return Services.GetRequiredService<IHostingEnvironment>();
+            }
+        }
+
+        public ILoggerFactory LoggerFactory
+        {
+            get
+            {
+                return Services.GetRequiredService<ILoggerFactory>();
             }
         }
 
@@ -121,7 +136,7 @@ namespace Microsoft.AspNet.Hosting.Internal
                Server.Dispose();
                _applicationLifetime.NotifyStopped();
                (_applicationServices as IDisposable)?.Dispose();
-           }));
+           });
         }
 
         private void EnsureApplicationServices()
@@ -186,7 +201,7 @@ namespace Microsoft.AspNet.Hosting.Internal
             }
             catch (Exception ex)
             {
-                if (!_captureStartupErrors)
+                if (!_options.CaptureStartupErrors)
                 {
                     throw;
                 }

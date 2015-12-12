@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
+using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Testing.xunit;
 using Xunit;
 
@@ -13,7 +14,7 @@ namespace Microsoft.AspNet.TestHost
         [FrameworkSkipCondition(RuntimeFrameworks.Mono)]
         public void AddRequestHeader()
         {
-            var server = TestServer.Create(app => { });
+            var server = new WebApplicationBuilder().UseStartup(app => { }).BuildTestServer();
             server.CreateRequest("/")
                 .AddHeader("Host", "MyHost:90")
                 .And(request =>
@@ -25,7 +26,7 @@ namespace Microsoft.AspNet.TestHost
         [Fact]
         public void AddContentHeaders()
         {
-            var server = TestServer.Create(app => { });
+            var server = new WebApplicationBuilder().UseStartup(app => { }).BuildTestServer();
             server.CreateRequest("/")
                 .AddHeader("Content-Type", "Test/Value")
                 .And(request =>

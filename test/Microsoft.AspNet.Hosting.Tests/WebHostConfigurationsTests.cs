@@ -9,6 +9,7 @@ using System.Reflection;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Builder.Internal;
 using Microsoft.AspNet.Hosting.Fakes;
+using Microsoft.AspNet.Hosting.Internal;
 using Microsoft.AspNet.Hosting.Startup;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ namespace Microsoft.AspNet.Hosting.Tests
                 {"app", "MyProjectReference"},
                 {"environment", "Development"},
                 {"detailederrors", "true"},
+                { "captureStartupErrors", "true" }
             };
 
             var config = new WebHostOptions(new ConfigurationBuilder().AddInMemoryCollection(parameters).Build());
@@ -37,7 +39,8 @@ namespace Microsoft.AspNet.Hosting.Tests
             Assert.Equal("Microsoft.AspNet.Server.Kestrel", config.Server);
             Assert.Equal("MyProjectReference", config.Application);
             Assert.Equal("Development", config.Environment);
-            Assert.Equal(true, config.DetailedErrors);
+            Assert.True(config.CaptureStartupErrors);
+            Assert.True(config.DetailedErrors);
         }
 
         [Fact]

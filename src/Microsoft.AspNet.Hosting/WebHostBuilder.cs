@@ -24,8 +24,8 @@ namespace Microsoft.AspNet.Hosting
         private readonly IHostingEnvironment _hostingEnvironment;
 
         private readonly ILoggerFactory _loggerFactory;
-        private readonly IConfiguration _config;
-        private readonly WebHostOptions _options;
+        private IConfiguration _config;
+        private WebHostOptions _options;
 
         private Action<IServiceCollection> _configureServices;
         private string _environmentName;
@@ -34,15 +34,15 @@ namespace Microsoft.AspNet.Hosting
         private StartupMethods _startup;
         private Type _startupType;
         private string _startupAssemblyName;
-        private readonly bool _captureStartupErrors;
 
         // Only one of these should be set
         private string _serverFactoryLocation;
         private IServerFactory _serverFactory;
         private IServer _server;
+        private string _webRoot;
 
         public WebApplicationBuilder()
-        { 
+        {
             _hostingEnvironment = new HostingEnvironment();
             _loggerFactory = new LoggerFactory();
             _config = WebHostConfiguration.GetDefault();
@@ -95,12 +95,18 @@ namespace Microsoft.AspNet.Hosting
             var appEnvironment = hostingContainer.GetRequiredService<IApplicationEnvironment>();
             var startupLoader = hostingContainer.GetRequiredService<IStartupLoader>();
 
+            _options = new WebHostOptions(_config);
+
+            // Initialize the hosting environment
+            _options.WebRoot = _webRoot ?? _options.WebRoot;
             _hostingEnvironment.Initialize(appEnvironment.ApplicationBasePath, _options, _config);
+
             if (!string.IsNullOrEmpty(_environmentName))
             {
                 _hostingEnvironment.EnvironmentName = _environmentName;
             }
-            var engine = new HostingEngine(hostingServices, startupLoader, _options, _config, _captureStartupErrors);
+
+            var engine = new HostingEngine(hostingServices, startupLoader, _options, _config, _hostingEnvironment);
 
             // Only one of these should be set, but they are used in priority
             engine.Server = _server;
@@ -117,6 +123,7 @@ namespace Microsoft.AspNet.Hosting
 
         public WebApplicationBuilder UseConfiguration(IConfiguration configuration)
         {
+            _config = configuration;
             return this;
         }
 
@@ -134,6 +141,16 @@ namespace Microsoft.AspNet.Hosting
             }
 
             _environmentName = environment;
+            return this;
+        }
+
+        public WebApplicationBuilder UseWebRoot(string webRoot)
+        {
+            if (webRoot == null)
+            {
+                throw new ArgumentNullException(nameof(webRoot));
+            }
+            _webRoot = webRoot;
             return this;
         }
 
