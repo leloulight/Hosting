@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.AspNet.Hosting
 {
@@ -49,17 +51,21 @@ namespace Microsoft.AspNet.Hosting
             }
         }
 
-        public void Main_FullControl(string[] args)
+        public void Main_FullControl()
         {
-            var config = WebHostConfiguration.GetDefault(args);
-
             var builder = new WebApplicationBuilder()
-                .UseConfiguration(config)
-                .UseServerFactory("Microsoft.AspNet.Server.Kestrel")
+                .UseServerFactory("Microsoft.AspNet.Server.Kestrel") // Set the server manually
                 .UseEnvironment("Development")
                 .UseWebRoot("public")
+                .UseServices(services =>
+                {
+                    // Configure services that the application can see
+                    services.AddSingleton<IMyCustomService, MyCustomService>();
+                })
                 .UseStartup(app =>
                 {
+                    // Write the application inline, this won't call any startup class in the assembly
+
                     app.Use(next => context =>
                     {
                         return next(context);
@@ -68,10 +74,37 @@ namespace Microsoft.AspNet.Hosting
 
             var application = builder.Build();
 
+            // Add custom logger provider
+            application.LoggerFactory.AddProvider(new MyHostLoggerProvider());
+
             application.Run();
         }
 
+        public class MyHostLoggerProvider : ILoggerProvider
+        {
+            public ILogger CreateLogger(string categoryName)
+            {
+                throw new NotImplementedException();
+            }
 
+            public void Dispose()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public interface IMyCustomService
+        {
+            void Go();
+        }
+
+        public class MyCustomService : IMyCustomService
+        {
+            public void Go()
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 
     internal class StartAndStop
