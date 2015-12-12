@@ -31,8 +31,6 @@ namespace Microsoft.AspNet.Hosting.Internal
         private readonly IConfiguration _config;
 
         private IServiceProvider _applicationServices;
-        private readonly IHostingEnvironment _hostingEnvironment;
-        private readonly ILoggerFactory _loggerFactory;
 
         // Only one of these should be set
         internal string StartupAssemblyName { get; set; }

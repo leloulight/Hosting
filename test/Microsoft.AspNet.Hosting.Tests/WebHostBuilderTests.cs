@@ -151,6 +151,7 @@ namespace Microsoft.AspNet.Hosting
             {
                 { "server", "Microsoft.AspNet.Hosting.Tests" },
                 { "DetailedErrors", "true" },
+                { "captureStartupErrors", "true" }
             };
             var builder = new ConfigurationBuilder()
                 .AddInMemoryCollection(vals);
