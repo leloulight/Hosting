@@ -45,7 +45,7 @@ namespace Microsoft.AspNet.Hosting
                 .UseConfiguration(config)
                 .Build();
 
-            using (var app = application.Start())
+            using (application.Start())
             {
                 Console.ReadLine();
             }
@@ -57,6 +57,10 @@ namespace Microsoft.AspNet.Hosting
                 .UseServerFactory("Microsoft.AspNet.Server.Kestrel") // Set the server manually
                 .UseEnvironment("Development")
                 .UseWebRoot("public")
+                .UseLoggerFactory(loggerFactory => // Configure logging
+                {
+                    loggerFactory.AddProvider(new MyHostLoggerProvider());
+                })
                 .UseServices(services =>
                 {
                     // Configure services that the application can see
@@ -73,9 +77,6 @@ namespace Microsoft.AspNet.Hosting
                 });
 
             var application = builder.Build();
-
-            // Add custom logger provider
-            application.LoggerFactory.AddProvider(new MyHostLoggerProvider());
 
             application.Run();
         }
@@ -115,6 +116,9 @@ namespace Microsoft.AspNet.Hosting
         public StartAndStop()
         {
             _host = new WebApplicationBuilder().Build();
+
+            // Clear all configured addresses
+            _host.GetAddresses().Clear();
         }
 
         public void Start()
@@ -127,13 +131,11 @@ namespace Microsoft.AspNet.Hosting
             _application.Dispose();
         }
 
-        public void AddUrls()
+        public void AddUrl(string url)
         {
             var addresses = _host.GetAddresses();
 
-            // Clear all addresses
-            addresses.Clear();
-            addresses.Add("http://localhost:5000");
+            addresses.Add(url);
         }
     }
 }

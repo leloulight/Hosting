@@ -4,7 +4,6 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Hosting.Server;
 using Microsoft.AspNet.Http;
@@ -13,14 +12,6 @@ using Context = Microsoft.AspNet.Hosting.Internal.HostingApplication.Context;
 
 namespace Microsoft.AspNet.TestHost
 {
-    public static class WebApplicationBuilderExtensions
-    {
-        public static TestServer BuildTestServer(this WebApplicationBuilder builder)
-        {
-            return new TestServer(builder);
-        }
-    }
-
     public class TestServer : IServer
     {
         private const string DefaultEnvironmentName = "Development";
@@ -85,8 +76,8 @@ namespace Microsoft.AspNet.TestHost
 
         private class ApplicationWrapper<TContext> : IHttpApplication<TContext>
         {
-            IHttpApplication<TContext> _application;
-            Action _preProcessRequestAsync;
+            private readonly IHttpApplication<TContext> _application;
+            private readonly Action _preProcessRequestAsync;
 
             public ApplicationWrapper(IHttpApplication<TContext> application, Action preProcessRequestAsync)
             {

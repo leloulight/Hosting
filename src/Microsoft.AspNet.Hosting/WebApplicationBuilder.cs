@@ -113,6 +113,12 @@ namespace Microsoft.AspNet.Hosting
             return this;
         }
 
+        public WebApplicationBuilder UseLoggerFactory(Action<ILoggerFactory> loggerFactory)
+        {
+            loggerFactory(_loggerFactory);
+            return this;
+        }
+
         public WebApplicationBuilder UseStartup(string startupAssemblyName)
         {
             if (startupAssemblyName == null)
