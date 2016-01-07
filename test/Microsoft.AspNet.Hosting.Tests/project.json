@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "compilationOptions": {
     "warningsAsErrors": true,
     "keyFile": "../../tools/Key.snk"
@@ -19,3 +20,25 @@
     "test": "xunit.runner.aspnet"
   }
 }
+=======
+    "compilationOptions": {
+        "warningsAsErrors": true,
+        "keyFile": "../../tools/Key.snk"
+    },
+    "dependencies": {
+        "Microsoft.AspNet.Hosting": "1.0.0-*",
+        "Microsoft.AspNet.Owin": "1.0.0-*",
+        "Microsoft.AspNet.Testing": "1.0.0-*",
+        "Microsoft.Extensions.Options": "1.0.0-*",
+        "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+        "xunit.runner.aspnet": "2.0.0-aspnet-*"
+    },
+    "frameworks": {
+        "dnx451": { },
+        "dnxcore50": { }
+    },
+    "commands": {
+        "test": "xunit.runner.aspnet"
+    }
+}
+>>>>>>> refs/remotes/aspnet/dev

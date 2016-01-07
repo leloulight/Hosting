@@ -10,8 +10,16 @@
     "url": "git://github.com/aspnet/hosting"
   },
   "dependencies": {
+<<<<<<< HEAD
     "Microsoft.AspNet.Http.Abstractions": "1.0.0-rc1-final",
     "Microsoft.AspNet.FileProviders.Abstractions": "1.0.0-rc1-final"
+=======
+    "Microsoft.AspNet.Http.Abstractions": "1.0.0-*",
+    "Microsoft.AspNet.FileProviders.Abstractions": "1.0.0-*",
+    "Microsoft.AspNet.Hosting.Server.Abstractions": "1.0.0-*",
+    "Microsoft.Extensions.Configuration.Abstractions": "1.0.0-*",
+    "Microsoft.Extensions.DependencyInjection.Abstractions": "1.0.0-*"
+>>>>>>> refs/remotes/aspnet/dev
   },
   "frameworks": {
     "net451": {},

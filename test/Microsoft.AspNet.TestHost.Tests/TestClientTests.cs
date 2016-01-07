@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
+using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Testing.xunit;
 using Xunit;
@@ -22,17 +23,19 @@ namespace Microsoft.AspNet.TestHost
 
         public TestClientTests()
         {
-            _server = TestServer.Create(app => app.Run(ctx => Task.FromResult(0)));
+            _server = new TestServer(new WebApplicationBuilder().Configure(app => app.Run(ctx => Task.FromResult(0))));
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task GetAsyncWorks()
         {
             // Arrange
             var expected = "GET Response";
             RequestDelegate appDelegate = ctx =>
                 ctx.Response.WriteAsync(expected);
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var builder = new WebApplicationBuilder().Configure(app => app.Run(appDelegate));
+            var server = new TestServer(builder);
             var client = server.CreateClient();
 
             // Act
@@ -42,7 +45,8 @@ namespace Microsoft.AspNet.TestHost
             Assert.Equal(expected, actual);
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task NoTrailingSlash_NoPathBase()
         {
             // Arrange
@@ -53,7 +57,8 @@ namespace Microsoft.AspNet.TestHost
                 Assert.Equal("/", ctx.Request.Path.Value);
                 return ctx.Response.WriteAsync(expected);
             };
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var builder = new WebApplicationBuilder().Configure(app => app.Run(appDelegate));
+            var server = new TestServer(builder);
             var client = server.CreateClient();
 
             // Act
@@ -63,7 +68,8 @@ namespace Microsoft.AspNet.TestHost
             Assert.Equal(expected, actual);
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task SingleTrailingSlash_NoPathBase()
         {
             // Arrange
@@ -74,7 +80,8 @@ namespace Microsoft.AspNet.TestHost
                 Assert.Equal("/", ctx.Request.Path.Value);
                 return ctx.Response.WriteAsync(expected);
             };
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var builder = new WebApplicationBuilder().Configure(app => app.Run(appDelegate));
+            var server = new TestServer(builder);
             var client = server.CreateClient();
 
             // Act
@@ -84,13 +91,15 @@ namespace Microsoft.AspNet.TestHost
             Assert.Equal(expected, actual);
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task PutAsyncWorks()
         {
             // Arrange
             RequestDelegate appDelegate = ctx =>
                 ctx.Response.WriteAsync(new StreamReader(ctx.Request.Body).ReadToEnd() + " PUT Response");
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var builder = new WebApplicationBuilder().Configure(app => app.Run(appDelegate));
+            var server = new TestServer(builder);
             var client = server.CreateClient();
 
             // Act
@@ -101,13 +110,15 @@ namespace Microsoft.AspNet.TestHost
             Assert.Equal("Hello world PUT Response", await response.Content.ReadAsStringAsync());
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task PostAsyncWorks()
         {
             // Arrange
             RequestDelegate appDelegate = async ctx =>
                 await ctx.Response.WriteAsync(new StreamReader(ctx.Request.Body).ReadToEnd() + " POST Response");
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var builder = new WebApplicationBuilder().Configure(app => app.Run(appDelegate));
+            var server = new TestServer(builder);
             var client = server.CreateClient();
 
             // Act
@@ -118,7 +129,8 @@ namespace Microsoft.AspNet.TestHost
             Assert.Equal("Hello world POST Response", await response.Content.ReadAsStringAsync());
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task WebSocketWorks()
         {
             // Arrange
@@ -144,10 +156,11 @@ namespace Microsoft.AspNet.TestHost
                     }
                 }
             };
-            var server = TestServer.Create(app =>
+            var builder = new WebApplicationBuilder().Configure(app =>
             {
                 app.Run(appDelegate);
             });
+            var server = new TestServer(builder);
 
             // Act
             var client = server.CreateWebSocketClient();
@@ -179,7 +192,8 @@ namespace Microsoft.AspNet.TestHost
             clientSocket.Dispose();
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task WebSocketDisposalThrowsOnPeer()
         {
             // Arrange
@@ -191,10 +205,11 @@ namespace Microsoft.AspNet.TestHost
                     websocket.Dispose();
                 }
             };
-            var server = TestServer.Create(app =>
+            var builder = new WebApplicationBuilder().Configure(app =>
             {
                 app.Run(appDelegate);
             });
+            var server = new TestServer(builder);
 
             // Act
             var client = server.CreateWebSocketClient();
@@ -205,7 +220,8 @@ namespace Microsoft.AspNet.TestHost
             clientSocket.Dispose();
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task WebSocketTinyReceiveGeneratesEndOfMessage()
         {
             // Arrange
@@ -223,10 +239,11 @@ namespace Microsoft.AspNet.TestHost
                     }
                 }
             };
-            var server = TestServer.Create(app =>
+            var builder = new WebApplicationBuilder().Configure(app =>
             {
                 app.Run(appDelegate);
             });
+            var server = new TestServer(builder);
 
             // Act
             var client = server.CreateWebSocketClient();
@@ -248,7 +265,8 @@ namespace Microsoft.AspNet.TestHost
             clientSocket.Dispose();
         }
 
-        [Fact]
+        [ConditionalFact]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task ClientDisposalAbortsRequest()
         {
             // Arrange
@@ -270,7 +288,8 @@ namespace Microsoft.AspNet.TestHost
             };
 
             // Act
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var builder = new WebApplicationBuilder().Configure(app => app.Run(appDelegate));
+            var server = new TestServer(builder);
             var client = server.CreateClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost:12345");
             var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
@@ -282,7 +301,7 @@ namespace Microsoft.AspNet.TestHost
         }
 
         [ConditionalFact]
-        [FrameworkSkipCondition(RuntimeFrameworks.CoreCLR, SkipReason = "Hangs randomly (issue #422).")]
+        [FrameworkSkipCondition(RuntimeFrameworks.Mono, SkipReason = "Hangs randomly (issue #507)")]
         public async Task ClientCancellationAbortsRequest()
         {
             // Arrange
@@ -301,7 +320,8 @@ namespace Microsoft.AspNet.TestHost
             };
 
             // Act
-            var server = TestServer.Create(app => app.Run(appDelegate));
+            var builder = new WebApplicationBuilder().Configure(app => app.Run(appDelegate));
+            var server = new TestServer(builder);
             var client = server.CreateClient();
             var cts = new CancellationTokenSource();
             cts.CancelAfter(500);

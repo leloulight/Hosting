@@ -7,9 +7,10 @@ using System.Reflection;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Builder.Internal;
 using Microsoft.AspNet.Hosting.Fakes;
+using Microsoft.AspNet.Hosting.Internal;
 using Microsoft.AspNet.Hosting.Startup;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.OptionsModel;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Microsoft.AspNet.Hosting.Tests
@@ -22,7 +23,7 @@ namespace Microsoft.AspNet.Hosting.Tests
         public void StartupClassMayHaveHostingServicesInjected()
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddInstance<IFakeStartupCallback>(this);
+            serviceCollection.AddSingleton<IFakeStartupCallback>(this);
             var services = serviceCollection.BuildServiceProvider();
 
             var diagnosticMessages = new List<string>();
@@ -71,7 +72,7 @@ namespace Microsoft.AspNet.Hosting.Tests
         public void StartupWithNoConfigureThrows()
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddInstance<IFakeStartupCallback>(this);
+            serviceCollection.AddSingleton<IFakeStartupCallback>(this);
             var services = serviceCollection.BuildServiceProvider();
 
             var diagnosticMessages = new List<string>();
@@ -87,7 +88,7 @@ namespace Microsoft.AspNet.Hosting.Tests
         public void StartupWithTwoConfiguresThrows()
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddInstance<IFakeStartupCallback>(this);
+            serviceCollection.AddSingleton<IFakeStartupCallback>(this);
             var services = serviceCollection.BuildServiceProvider();
 
             var diagnosticMessages = new List<string>();
@@ -103,7 +104,7 @@ namespace Microsoft.AspNet.Hosting.Tests
         public void StartupWithPrivateConfiguresThrows()
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddInstance<IFakeStartupCallback>(this);
+            serviceCollection.AddSingleton<IFakeStartupCallback>(this);
             var services = serviceCollection.BuildServiceProvider();
 
             var diagnosticMessages = new List<string>();
@@ -119,7 +120,7 @@ namespace Microsoft.AspNet.Hosting.Tests
         public void StartupWithTwoConfigureServicesThrows()
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddInstance<IFakeStartupCallback>(this);
+            serviceCollection.AddSingleton<IFakeStartupCallback>(this);
             var services = serviceCollection.BuildServiceProvider();
 
             var diagnosticMessages = new List<string>();

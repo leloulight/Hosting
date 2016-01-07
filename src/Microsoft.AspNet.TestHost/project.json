@@ -20,8 +20,13 @@
     },
     "dotnet5.4": {
       "dependencies": {
+<<<<<<< HEAD
         "System.Diagnostics.Contracts": "4.0.1-beta-23516",
         "System.Net.Http": "4.0.1-beta-23516"
+=======
+        "System.Diagnostics.Contracts": "4.0.1-*",
+        "System.Net.Http": "4.0.1-*"
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   }

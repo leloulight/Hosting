@@ -10,6 +10,8 @@ namespace Microsoft.AspNet.Hosting.Internal
 {
     internal static class HostingLoggerExtensions
     {
+        private const long TicksPerMillisecond = 10000;
+		
         public static IDisposable RequestScope(this ILogger logger, HttpContext httpContext)
         {
             return logger.BeginScopeImpl(new HostingLogScope(httpContext));
@@ -28,31 +30,20 @@ namespace Microsoft.AspNet.Hosting.Internal
             }
         }
 
-        public static void RequestFinished(this ILogger logger, HttpContext httpContext, int startTimeInTicks)
+        public static void RequestFinished(this ILogger logger, HttpContext httpContext, int startTimeInTicks, int currentTick)
         {
             if (logger.IsEnabled(LogLevel.Information))
             {
-                var elapsed = new TimeSpan(Environment.TickCount - startTimeInTicks);
+                var elapsed = new TimeSpan(TicksPerMillisecond * (currentTick < startTimeInTicks ?
+                    (int.MaxValue - startTimeInTicks) + (currentTick - int.MinValue) :
+                    currentTick - startTimeInTicks));
+
                 logger.Log(
                     logLevel: LogLevel.Information,
                     eventId: LoggerEventIds.RequestFinished,
                     state: new HostingRequestFinished(httpContext, elapsed),
                     exception: null,
                     formatter: HostingRequestFinished.Callback);
-            }
-        }
-
-        public static void RequestFailed(this ILogger logger, HttpContext httpContext, int startTimeInTicks)
-        {
-            if (logger.IsEnabled(LogLevel.Information))
-            {
-                var elapsed = new TimeSpan(Environment.TickCount - startTimeInTicks);
-                logger.Log(
-                    logLevel: LogLevel.Information,
-                    eventId: LoggerEventIds.RequestFailed,
-                    state: new HostingRequestFailed(httpContext, elapsed),
-                    exception: null,
-                    formatter: HostingRequestFailed.Callback);
             }
         }
 
@@ -66,9 +57,9 @@ namespace Microsoft.AspNet.Hosting.Internal
 
         public static void Starting(this ILogger logger)
         {
-            if (logger.IsEnabled(LogLevel.Verbose))
+            if (logger.IsEnabled(LogLevel.Debug))
             {
-                logger.LogVerbose(
+                logger.LogDebug(
                    eventId: LoggerEventIds.Starting,
                    data: "Hosting starting");
             }
@@ -76,9 +67,9 @@ namespace Microsoft.AspNet.Hosting.Internal
 
         public static void Started(this ILogger logger)
         {
-            if (logger.IsEnabled(LogLevel.Verbose))
+            if (logger.IsEnabled(LogLevel.Debug))
             {
-                logger.LogVerbose(
+                logger.LogDebug(
                     eventId: LoggerEventIds.Started,
                     data: "Hosting started");
             }
@@ -86,9 +77,9 @@ namespace Microsoft.AspNet.Hosting.Internal
 
         public static void Shutdown(this ILogger logger)
         {
-            if (logger.IsEnabled(LogLevel.Verbose))
+            if (logger.IsEnabled(LogLevel.Debug))
             {
-                logger.LogVerbose(
+                logger.LogDebug(
                     eventId: LoggerEventIds.Shutdown,
                     data: "Hosting shutdown");
             }
@@ -213,48 +204,6 @@ namespace Microsoft.AspNet.Hosting.Internal
                         new KeyValuePair<string, object>("ElapsedMilliseconds", _elapsed.TotalMilliseconds),
                         new KeyValuePair<string, object>("StatusCode", _httpContext.Response.StatusCode),
                         new KeyValuePair<string, object>("ContentType", _httpContext.Response.ContentType),
-                    };
-                }
-
-                return _cachedGetValues;
-            }
-        }
-
-        private class HostingRequestFailed
-        {
-            internal static readonly Func<object, Exception, string> Callback = (state, exception) => ((HostingRequestFailed)state).ToString();
-
-            private readonly HttpContext _httpContext;
-            private readonly TimeSpan _elapsed;
-
-            private IEnumerable<KeyValuePair<string, object>> _cachedGetValues;
-            private string _cachedToString;
-
-            public HostingRequestFailed(HttpContext httpContext, TimeSpan elapsed)
-            {
-                _httpContext = httpContext;
-                _elapsed = elapsed;
-            }
-
-            public override string ToString()
-            {
-                if (_cachedToString == null)
-                {
-                    _cachedToString = $"Request finished in {_elapsed.TotalMilliseconds}ms 500";
-                }
-
-                return _cachedToString;
-            }
-
-            public IEnumerable<KeyValuePair<string, object>> GetValues()
-            {
-                if (_cachedGetValues == null)
-                {
-                    _cachedGetValues = new[]
-                    {
-                        new KeyValuePair<string, object>("ElapsedMilliseconds", _elapsed.TotalMilliseconds),
-                        new KeyValuePair<string, object>("StatusCode", 500),
-                        new KeyValuePair<string, object>("ContentType", null),
                     };
                 }
 

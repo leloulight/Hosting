@@ -2,14 +2,15 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.AspNet.Testing;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.AspNet.Server.Testing
 {
@@ -38,15 +39,15 @@ namespace Microsoft.AspNet.Server.Testing
         {
             get
             {
-                if (TestPlatformHelper.IsLinux)
+                if (PlatformServices.Default.Runtime.OperatingSystemPlatform == Platform.Linux)
                 {
                     return "linux";
                 }
-                else if (TestPlatformHelper.IsMac)
+                else if (PlatformServices.Default.Runtime.OperatingSystemPlatform == Platform.Darwin)
                 {
                     return "darwin";
                 }
-                else if (TestPlatformHelper.IsWindows)
+                else if (PlatformServices.Default.Runtime.OperatingSystemPlatform == Platform.Windows)
                 {
                     return "win";
                 }
@@ -99,46 +100,29 @@ namespace Microsoft.AspNet.Server.Testing
 
         protected string PopulateChosenRuntimeInformation()
         {
-            string currentRuntimeBinPath = string.Empty;
-            if (TestPlatformHelper.IsMac && DeploymentParameters.RuntimeFlavor == RuntimeFlavor.CoreClr)
-            {
-                var path = Environment.GetEnvironmentVariable("PATH");
-                currentRuntimeBinPath = path.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries).
-                    Where(c => c.Contains("dnx-coreclr-darwin") || c.Contains("dnx-mono")).FirstOrDefault();
+            string currentRuntimeBinPath = PlatformServices.Default.Runtime.RuntimePath;
+            Logger.LogInformation($"Current runtime path is : {currentRuntimeBinPath}");
 
-                if (string.IsNullOrWhiteSpace(currentRuntimeBinPath))
-                {
-                    throw new Exception("Runtime not detected on the machine.");
-                }
+            string targetRuntimeName;
+            if (DeploymentParameters.RuntimeFlavor == RuntimeFlavor.Mono)
+            {
+                targetRuntimeName = "dnx-mono";
             }
             else
             {
-                // ex: runtimes/dnx-coreclr-win-x64.1.0.0-rc1-15844/bin
-                currentRuntimeBinPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
-            }
-            Logger.LogInformation($"Current runtime path is : {currentRuntimeBinPath}");
-
-            var targetRuntimeName = new StringBuilder()
+                targetRuntimeName = new StringBuilder()
                     .Append("dnx")
                     .Append((DeploymentParameters.RuntimeFlavor == RuntimeFlavor.CoreClr) ? "-coreclr" : "-clr")
                     .Append($"-{OSPrefix}")
                     .Append((DeploymentParameters.RuntimeArchitecture == RuntimeArchitecture.x86) ? "-x86" : "-x64")
                     .ToString();
-
-            string targetRuntimeBinPath;
-            // Ex: When current runtime is Mono and the tests are being run for CoreClr
-            if (currentRuntimeBinPath.Contains("dnx-mono"))
-            {
-                targetRuntimeBinPath = currentRuntimeBinPath.Replace("dnx-mono", targetRuntimeName);
             }
-            else
-            {
-                targetRuntimeBinPath = Regex.Replace(
+
+            var targetRuntimeBinPath = Regex.Replace(
                     currentRuntimeBinPath,
-                    "dnx-(clr|coreclr)-(win|linux|darwin)-(x86|x64)",
+                    "dnx-(mono|((clr|coreclr)-(win|linux|darwin)-(x86|x64)))",
                     targetRuntimeName,
                     RegexOptions.IgnoreCase);
-            }
 
             var targetRuntimeBinDir = new DirectoryInfo(targetRuntimeBinPath);
             if (targetRuntimeBinDir == null || !targetRuntimeBinDir.Exists)
@@ -151,6 +135,10 @@ namespace Microsoft.AspNet.Server.Testing
             DeploymentParameters.DnxRuntime = ChosenRuntimeName;
 
             Logger.LogInformation($"Chosen runtime path is {ChosenRuntimePath}");
+
+            // Work around win7 search path issues.
+            var newPath = ChosenRuntimePath + Path.PathSeparator + Environment.GetEnvironmentVariable("PATH");
+            DeploymentParameters.EnvironmentVariables.Add(new KeyValuePair<string, string>("PATH", newPath));
 
             return ChosenRuntimeName;
         }

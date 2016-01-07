@@ -11,73 +11,40 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text;
-using Microsoft.Dnx.Compilation;
+using System.Text.Encodings.Web;
+using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.PlatformAbstractions;
-using Microsoft.Extensions.WebEncoders;
 
 namespace Microsoft.AspNet.Hosting.Startup
 {
     internal static class StartupExceptionPage
     {
-        private const int MaxCompilationErrorsToShow = 20;
-
         private static readonly string _errorPageFormatString = GetResourceString("GenericError.html", escapeBraces: true);
         private static readonly string _errorMessageFormatString = GetResourceString("GenericError_Message.html");
         private static readonly string _errorExceptionFormatString = GetResourceString("GenericError_Exception.html");
         private static readonly string _errorFooterFormatString = GetResourceString("GenericError_Footer.html");
-        private static readonly string _compilationExceptionFormatString = GetResourceString("Compilation_Exception.html");
 
-        public static byte[] GenerateErrorHtml(bool showDetails, IRuntimeEnvironment runtimeEnvironment, params object[] errorDetails)
+        public static byte[] GenerateErrorHtml(bool showDetails, IRuntimeEnvironment runtimeEnvironment, Exception exception)
         {
-            if (!showDetails)
-            {
-                errorDetails = new[] { "An error occurred while starting the application." };
-            }
-
             // Build the message for each error
-            var wasSourceCodeWrittenOntoPage = false;
             var builder = new StringBuilder();
             var rawExceptionDetails = new StringBuilder();
 
-            foreach (object error in errorDetails ?? new object[0])
+            if (!showDetails)
             {
-                var ex = error as Exception;
-                if (ex == null && error is ExceptionDispatchInfo)
+                WriteMessage("An error occurred while starting the application.", builder);
+            }
+            else
+            {
+                Debug.Assert(exception != null);
+                var wasSourceCodeWrittenOntoPage = false;
+                var flattenedExceptions = FlattenAndReverseExceptionTree(exception);
+                foreach (var innerEx in flattenedExceptions)
                 {
-                    ex = ((ExceptionDispatchInfo)error).SourceException;
+                    WriteException(innerEx, builder, ref wasSourceCodeWrittenOntoPage);
                 }
 
-                if (ex != null)
-                {
-                    var flattenedExceptions = FlattenAndReverseExceptionTree(ex);
-
-                    var compilationException = flattenedExceptions.OfType<ICompilationException>()
-                                                                  .FirstOrDefault();
-                    if (compilationException != null)
-                    {
-                        WriteException(compilationException, builder, ref wasSourceCodeWrittenOntoPage);
-
-                        var compilationErrorMessages = compilationException.CompilationFailures
-                            .SelectMany(f => f.Messages.Select(m => m.FormattedMessage))
-                            .Take(MaxCompilationErrorsToShow);
-
-                        WriteRawExceptionDetails("Show raw compilation error details", compilationErrorMessages, rawExceptionDetails);
-                    }
-                    else
-                    {
-                        foreach (var innerEx in flattenedExceptions)
-                        {
-                            WriteException(innerEx, builder, ref wasSourceCodeWrittenOntoPage);
-                        }
-
-                        WriteRawExceptionDetails("Show raw exception details", new[] { ex.ToString() }, rawExceptionDetails);
-                    }
-                }
-                else
-                {
-                    var message = Convert.ToString(error, CultureInfo.InvariantCulture);
-                    WriteMessage(message, builder);
-                }
+                WriteRawExceptionDetails("Show raw exception details", exception.ToString(), rawExceptionDetails);
             }
 
             // Generate the footer
@@ -171,82 +138,11 @@ namespace Microsoft.AspNet.Hosting.Startup
 
         private static string BuildMethodParametersUnescaped(MethodBase method)
         {
-            return "(" + string.Join(", ", method.GetParameters().Select(p => {
-                Type parameterType = p.ParameterType;
+            return "(" + string.Join(", ", method.GetParameters().Select(p =>
+            {
+                var parameterType = p.ParameterType;
                 return ((parameterType != null) ? PrettyPrintTypeName(parameterType) : "?") + " " + p.Name;
             })) + ")";
-        }
-
-        private static void BuildCodeSnippetDiv(CompilationFailure failure,
-                                               StringBuilder builder,
-                                               ref int totalErrorsShown)
-        {
-            const int NumContextLines = 3;
-            var fileName = failure.SourceFilePath;
-            if (totalErrorsShown < MaxCompilationErrorsToShow &&
-                !string.IsNullOrEmpty(fileName))
-            {
-                builder.Append(@"<div class=""codeSnippet"">")
-                       .AppendFormat(@"<div class=""filename""><code>{0}</code></div>", HtmlEncodeAndReplaceLineBreaks(fileName))
-                       .AppendLine();
-
-                IEnumerable<string> fileContent;
-                if (string.IsNullOrEmpty(failure.SourceFileContent))
-                {
-                    fileContent = File.ReadLines(fileName);
-                }
-                else
-                {
-                    fileContent = failure.SourceFileContent.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                }
-                foreach (var message in failure.Messages)
-                {
-                    if (totalErrorsShown++ > MaxCompilationErrorsToShow)
-                    {
-                        break;
-                    }
-
-                    if (totalErrorsShown > 1)
-                    {
-                        builder.AppendLine("<br />");
-                    }
-
-                    builder.Append(@"<div class=""error-message"">")
-                           .Append(HtmlEncodeAndReplaceLineBreaks(message.Message))
-                           .Append("</div>");
-
-                    // StartLine and EndLine are 1-based
-                    var startLine = message.StartLine - 1;
-                    var endLine = message.EndLine - 1;
-                    var preContextIndex = Math.Max(startLine - NumContextLines, 0);
-                    var index = preContextIndex + 1;
-                    foreach (var line in fileContent.Skip(preContextIndex).Take(startLine - preContextIndex))
-                    {
-                        builder.Append(@"<div class=""line faded"">")
-                               .AppendFormat(@"<span class=""line-number"">{0}</span><code>", index++)
-                               .Append(HtmlEncodeAndReplaceLineBreaks(line))
-                               .AppendLine("</code></div>");
-                    }
-
-                    var numErrorLines = 1 + Math.Max(0, endLine - startLine);
-                    foreach (var line in fileContent.Skip(startLine).Take(numErrorLines))
-                    {
-                        builder.Append(@"<div class=""line error"">")
-                               .AppendFormat(@"<span class=""line-number"">{0}</span><code>", index++)
-                               .Append(HtmlEncodeAndReplaceLineBreaks(line))
-                               .AppendLine("</code></div>");
-                    }
-                    foreach (var line in fileContent.Skip(message.EndLine).Take(NumContextLines))
-                    {
-                        builder.Append(@"<div class=""line faded"">")
-                               .AppendFormat(@"<span class=""line-number"">{0}</span><code>", index++)
-                               .Append(HtmlEncodeAndReplaceLineBreaks(line))
-                               .AppendLine("</code></div>");
-                    }
-                }
-
-                builder.AppendLine("</div>"); // Close codeSnippet div
-            }
         }
 
         private static string GetResourceString(string name, bool escapeBraces = false)
@@ -320,50 +216,8 @@ namespace Microsoft.AspNet.Hosting.Startup
             return (didReadFailingLine) ? errorSubContents : null;
         }
 
-        private static string PrettyPrintTypeName(Type t)
-        {
-            try
-            {
-                RuntimeHelpers.EnsureSufficientExecutionStack();
+        private static string PrettyPrintTypeName(Type type) => TypeNameHelper.GetTypeDisplayName(type, fullName: false);
 
-                var name = t.Name;
-
-                // Degenerate case
-                if (string.IsNullOrEmpty(name))
-                {
-                    name = "?";
-                }
-
-                // Handle generic types
-                if (t.GetTypeInfo().IsGenericType)
-                {
-                    // strip off the CLR generic type marker if it exists
-                    var indexOfGenericTypeMarker = name.LastIndexOf('`');
-                    if (indexOfGenericTypeMarker >= 0)
-                    {
-                        name = name.Substring(0, indexOfGenericTypeMarker);
-                        name += "<" + string.Join(", ", t.GetGenericArguments().Select(PrettyPrintTypeName)) + ">";
-                    }
-                }
-
-                // Handle nested types
-                if (!t.IsGenericParameter)
-                {
-                    var containerType = t.DeclaringType;
-                    if (containerType != null)
-                    {
-                        name = PrettyPrintTypeName(containerType) + "." + name;
-                    }
-                }
-
-                return name;
-            }
-            catch
-            {
-                // If anything at all goes wrong, fall back to the full type name so that we don't crash the server.
-                return t.FullName;
-            }
-        }
 
         private static void SplitTypeIntoPrefixAndFriendlyName(Type type, out string prefix, out string friendlyName)
         {
@@ -411,7 +265,7 @@ namespace Microsoft.AspNet.Hosting.Startup
             return string.Join("<br />" + Environment.NewLine,
                 input.Split(new[] { "\r\n" }, StringSplitOptions.None)
                 .SelectMany(s => s.Split(new[] { '\r', '\n' }, StringSplitOptions.None))
-                .Select(HtmlEncoder.Default.HtmlEncode));
+                .Select(HtmlEncoder.Default.Encode));
         }
 
         private static void WriteException(Exception ex, StringBuilder builder, ref bool wasFailingCallSiteSourceWritten)
@@ -451,7 +305,7 @@ namespace Microsoft.AspNet.Hosting.Startup
                 stackTraceBuilder);
         }
 
-        private static void WriteRawExceptionDetails(string linkText, IEnumerable<string> lines, StringBuilder rawExceptionDetails)
+        private static void WriteRawExceptionDetails(string linkText, string line, StringBuilder rawExceptionDetails)
         {
             rawExceptionDetails
                 .AppendLine("<div class=\"rawExceptionBlock\">")
@@ -460,43 +314,12 @@ namespace Microsoft.AspNet.Hosting.Startup
                 .AppendLine("    <div id=\"rawException\">")
                 .Append("        <pre>");
 
-            foreach (var line in lines)
-            {
-                rawExceptionDetails.AppendLine(line);
-            }
+            rawExceptionDetails.AppendLine(line);
 
             rawExceptionDetails
                 .AppendLine("</pre>")
                 .AppendLine("    </div>")
                 .AppendLine("</div>");
-        }
-
-        private static void WriteException(ICompilationException compilationException,
-                                           StringBuilder builder,
-                                           ref bool wasSourceCodeWrittenOntoPage)
-        {
-            var totalErrorsShown = 0;
-            var inlineSourceDiv = new StringBuilder();
-            var firstStackFrame = true;
-            foreach (var failure in compilationException.CompilationFailures)
-            {
-                if (firstStackFrame)
-                {
-                    firstStackFrame = false;
-                }
-                else
-                {
-                    inlineSourceDiv.AppendLine("<br/>");
-                }
-
-                BuildCodeSnippetDiv(failure, inlineSourceDiv, ref totalErrorsShown);
-            }
-
-            wasSourceCodeWrittenOntoPage = totalErrorsShown > 0;
-
-            builder.AppendFormat(CultureInfo.InvariantCulture,
-                                 _compilationExceptionFormatString,
-                                 inlineSourceDiv);
         }
 
         private static void WriteMessage(string message, StringBuilder builder)
@@ -508,6 +331,21 @@ namespace Microsoft.AspNet.Hosting.Startup
 
         private static IEnumerable<Exception> FlattenAndReverseExceptionTree(Exception ex)
         {
+            // ReflectionTypeLoadException is special because the details are in 
+            // a the LoaderExceptions property
+            var typeLoadException = ex as ReflectionTypeLoadException;
+            if (typeLoadException != null)
+            {
+                var typeLoadExceptions = new List<Exception>();
+                foreach (Exception loadException in typeLoadException.LoaderExceptions)
+                {
+                    typeLoadExceptions.AddRange(FlattenAndReverseExceptionTree(loadException));
+                }
+
+                typeLoadExceptions.Add(ex);
+                return typeLoadExceptions;
+            }
+
             var list = new List<Exception>();
             while (ex != null)
             {

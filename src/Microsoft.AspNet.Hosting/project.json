@@ -10,6 +10,7 @@
     "keyFile": "../../tools/Key.snk"
   },
   "dependencies": {
+<<<<<<< HEAD
     "Microsoft.AspNet.FileProviders.Physical": "1.0.0-rc1-final",
     "Microsoft.AspNet.Hosting.Abstractions": "1.0.0-rc1-final",
     "Microsoft.AspNet.Hosting.Server.Abstractions": "1.0.0-rc1-final",
@@ -24,13 +25,28 @@
     "Microsoft.Dnx.Compilation.Abstractions": "1.0.0-rc1-final",
     "Microsoft.Extensions.PlatformAbstractions": "1.0.0-rc1-final",
     "System.Diagnostics.DiagnosticSource": "4.0.0-beta-23516"
+=======
+    "Microsoft.AspNet.FileProviders.Physical": "1.0.0-*",
+    "Microsoft.AspNet.Hosting.Abstractions": "1.0.0-*",
+    "Microsoft.AspNet.Hosting.Server.Abstractions": "1.0.0-*",
+    "Microsoft.AspNet.Http": "1.0.0-*",
+    "Microsoft.AspNet.Http.Extensions": "1.0.0-*",
+    "Microsoft.Extensions.Options": "1.0.0-*",
+    "Microsoft.Extensions.Configuration": "1.0.0-*",
+    "Microsoft.Extensions.Configuration.CommandLine": "1.0.0-*",
+    "Microsoft.Extensions.Configuration.EnvironmentVariables": "1.0.0-*",
+    "Microsoft.Extensions.Configuration.Json": "1.0.0-*",
+    "Microsoft.Extensions.DependencyInjection": "1.0.0-*",
+    "Microsoft.Extensions.Logging": "1.0.0-*",
+    "Microsoft.Extensions.PlatformAbstractions": "1.0.0-*",
+    "Microsoft.Extensions.TypeNameHelper.Sources": {
+      "version": "1.0.0-*",
+      "type": "build"
+    },
+    "System.Diagnostics.DiagnosticSource": "4.0.0-*"
+>>>>>>> refs/remotes/aspnet/dev
   },
   "frameworks": {
-    "dnx451": {
-      "frameworkAssemblies": {
-        "System.Runtime": ""
-      }
-    },
     "net451": {
       "frameworkAssemblies": {
         "System.Runtime": {
@@ -38,6 +54,7 @@
         }
       }
     },
+<<<<<<< HEAD
     "dnxcore50": {
       "dependencies": {
         "System.Console": "4.0.0-beta-23516",
@@ -50,6 +67,13 @@
         "System.Console": "4.0.0-beta-23516",
         "System.Diagnostics.StackTrace": "4.0.1-beta-23516",
         "System.Reflection.Extensions": "4.0.1-beta-23516"
+=======
+    "dotnet5.4": {
+      "dependencies": {
+        "System.Console": "4.0.0-*",
+        "System.Diagnostics.StackTrace": "4.0.1-*",
+        "System.Reflection.Extensions": "4.0.1-*"
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   }
